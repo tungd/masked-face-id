@@ -33,7 +33,7 @@ python3 scripts/colab_bridge.py serve --token "$COLAB_BRIDGE_TOKEN"
 In another local terminal:
 
 ```bash
-cloudflared tunnel --url http://127.0.0.1:8765
+cloudflared tunnel --url http://127.0.0.1:8876
 ```
 
 Copy the generated URL:
