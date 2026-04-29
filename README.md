@@ -73,13 +73,13 @@ notebook for the full FaceNet-based benchmark.
 
 ## Colab Agent
 
-For long GPU jobs, use an agent instead of driving every cell through MCP. MCP
-only starts the worker once; tasks are then submitted outside the browser and
-run inside the Colab runtime.
+For ad hoc GPU commands, use the simple bridge instead of driving every cell
+through MCP. MCP only starts one Colab receiver; after that, Codex submits a
+command through a local tunnel and waits for stdout, stderr, and the return
+code. See `docs/simple-colab-bridge.md`.
 
-Use the tunnel agent when this local machine can stay online. It runs a local
-HTTP broker, exposes it through Cloudflare Tunnel, and gives Colab only a shared
-bearer token. See `docs/tunnel-colab-agent.md`.
+Use the tunnel agent when you want local in-memory task state and result
+inspection without a managed queue. See `docs/tunnel-colab-agent.md`.
 
 Use the Cloudflare Queues agent when you want a managed durable queue. It uses
 one Cloudflare task queue and one result queue. See
