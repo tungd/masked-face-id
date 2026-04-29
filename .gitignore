@@ -1,0 +1,11 @@
+data/
+models/
+results/
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.7z
+__pycache__/
+.ipynb_checkpoints/
+.DS_Store
