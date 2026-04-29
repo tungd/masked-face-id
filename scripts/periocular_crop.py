@@ -6,6 +6,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, Sequence
+from urllib.request import urlretrieve
 
 import numpy as np
 import torch
@@ -20,6 +21,10 @@ RIGHT_BROW = [300, 293, 334, 296, 336, 285, 295, 282, 283, 276]
 IRISES = list(range(468, 478))
 UPPER_FACE = [10, 338, 297, 332, 284, 251, 389, 356, 127, 162, 21, 54, 103, 67, 109]
 PERIOCULAR_LANDMARKS = LEFT_EYE + RIGHT_EYE + LEFT_BROW + RIGHT_BROW + IRISES + UPPER_FACE
+FACE_LANDMARKER_MODEL_URL = (
+    "https://storage.googleapis.com/mediapipe-models/face_landmarker/"
+    "face_landmarker/float16/1/face_landmarker.task"
+)
 
 
 @dataclass(frozen=True)
@@ -75,6 +80,17 @@ def image_to_model_tensor(image: Image.Image, output_size: tuple[int, int]) -> t
     return (tensor - 0.5) / 0.5
 
 
+def ensure_face_landmarker_model(model_path: str | Path | None = None) -> Path:
+    path = Path(model_path) if model_path else Path.home() / ".cache" / "mediapipe" / "face_landmarker.task"
+    if path.exists():
+        return path
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_path = path.with_suffix(path.suffix + ".tmp")
+    urlretrieve(FACE_LANDMARKER_MODEL_URL, tmp_path)
+    tmp_path.replace(path)
+    return path
+
+
 class PeriocularCropper:
     """MediaPipe Face Mesh cropper for static face images."""
 
@@ -83,20 +99,34 @@ class PeriocularCropper:
         min_detection_confidence: float = 0.5,
         refine_landmarks: bool = True,
         landmark_indices: Iterable[int] = PERIOCULAR_LANDMARKS,
+        face_landmarker_model: str | Path | None = None,
     ):
         import mediapipe as mp
 
-        self._face_mesh_module = mp.solutions.face_mesh
-        self._face_mesh = self._face_mesh_module.FaceMesh(
-            static_image_mode=True,
-            max_num_faces=1,
-            refine_landmarks=refine_landmarks,
-            min_detection_confidence=min_detection_confidence,
-        )
         self._landmark_indices = tuple(landmark_indices)
+        self._mode = "legacy" if hasattr(mp, "solutions") else "tasks"
+        self._mp = mp
+        if self._mode == "legacy":
+            face_mesh_module = mp.solutions.face_mesh
+            self._landmarker = face_mesh_module.FaceMesh(
+                static_image_mode=True,
+                max_num_faces=1,
+                refine_landmarks=refine_landmarks,
+                min_detection_confidence=min_detection_confidence,
+            )
+        else:
+            model_path = ensure_face_landmarker_model(face_landmarker_model)
+            base_options = mp.tasks.BaseOptions(model_asset_path=str(model_path))
+            options = mp.tasks.vision.FaceLandmarkerOptions(
+                base_options=base_options,
+                running_mode=mp.tasks.vision.RunningMode.IMAGE,
+                num_faces=1,
+                min_face_detection_confidence=min_detection_confidence,
+            )
+            self._landmarker = mp.tasks.vision.FaceLandmarker.create_from_options(options)
 
     def close(self) -> None:
-        self._face_mesh.close()
+        self._landmarker.close()
 
     def __enter__(self) -> "PeriocularCropper":
         return self
@@ -106,10 +136,17 @@ class PeriocularCropper:
 
     def landmarks(self, image: Image.Image) -> np.ndarray | None:
         rgb = np.asarray(image.convert("RGB"))
-        results = self._face_mesh.process(rgb)
-        if not results.multi_face_landmarks:
-            return None
-        points = results.multi_face_landmarks[0].landmark
+        if self._mode == "legacy":
+            results = self._landmarker.process(rgb)
+            if not results.multi_face_landmarks:
+                return None
+            points = results.multi_face_landmarks[0].landmark
+        else:
+            mp_image = self._mp.Image(image_format=self._mp.ImageFormat.SRGB, data=rgb)
+            results = self._landmarker.detect(mp_image)
+            if not results.face_landmarks:
+                return None
+            points = results.face_landmarks[0]
         return np.array([[point.x, point.y, point.z] for point in points], dtype=np.float32)
 
     def crop(

@@ -77,10 +77,15 @@ def crop_periocular_records(
     crop_width: int,
     crop_height: int,
     min_detection_confidence: float,
+    face_landmarker_model: Path | None,
 ) -> tuple[dict[Path, torch.Tensor], pd.DataFrame]:
     crops: dict[Path, torch.Tensor] = {}
     rows = []
-    with PeriocularCropper(min_detection_confidence=min_detection_confidence, refine_landmarks=True) as cropper:
+    with PeriocularCropper(
+        min_detection_confidence=min_detection_confidence,
+        refine_landmarks=True,
+        face_landmarker_model=face_landmarker_model,
+    ) as cropper:
         for record in tqdm(records, desc="Cropping periocular regions"):
             result = cropper.crop(record.path, output_size=(crop_width, crop_height))
             if result is None:
@@ -456,6 +461,7 @@ def main() -> None:
     parser.add_argument("--crop-width", type=int, default=160)
     parser.add_argument("--crop-height", type=int, default=96)
     parser.add_argument("--min-detection-confidence", type=float, default=0.5)
+    parser.add_argument("--face-landmarker-model", type=Path, default=None)
     parser.add_argument("--embedding-dim", type=int, default=128)
     parser.add_argument("--hidden-dim", type=int, default=256)
     parser.add_argument("--dropout", type=float, default=0.1)
@@ -502,6 +508,7 @@ def main() -> None:
         crop_width=args.crop_width,
         crop_height=args.crop_height,
         min_detection_confidence=args.min_detection_confidence,
+        face_landmarker_model=args.face_landmarker_model,
     )
     crop_metadata.to_csv(args.out_dir / "periocular_crop_metadata.csv", index=False)
 
