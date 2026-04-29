@@ -226,6 +226,7 @@ def train_partial_finetune(
     base_model: nn.Module,
     records: Sequence[FaceRecord],
     tensors: dict[Path, torch.Tensor],
+    baseline_embeddings: dict[Path, np.ndarray],
     trainable_prefixes: Sequence[str],
     steps: int,
     identities_per_batch: int,
@@ -233,6 +234,8 @@ def train_partial_finetune(
     lr: float,
     weight_decay: float,
     temperature: float,
+    all_distill_weight: float,
+    unmasked_distill_weight: float,
     seed: int,
     device: str,
 ) -> tuple[nn.Module, pd.DataFrame]:
@@ -261,7 +264,27 @@ def train_partial_finetune(
         batch = torch.stack([tensors[record.path] for record in batch_records]).to(device)
         labels = torch.tensor(labels_list, dtype=torch.long, device=device)
         embeddings = F.normalize(base_model(batch), dim=-1)
-        loss = supervised_contrastive_loss(embeddings, labels, temperature=temperature)
+        supcon_loss = supervised_contrastive_loss(embeddings, labels, temperature=temperature)
+        frozen = torch.tensor(
+            np.stack([baseline_embeddings[record.path] for record in batch_records]),
+            dtype=torch.float32,
+            device=device,
+        )
+        cosine_distance = 1.0 - (embeddings * frozen).sum(dim=1)
+        all_distill_loss = cosine_distance.mean()
+        unmasked_mask = torch.tensor(
+            [record.condition == "unmasked" for record in batch_records],
+            dtype=torch.bool,
+            device=device,
+        )
+        unmasked_distill_loss = (
+            cosine_distance[unmasked_mask].mean() if bool(unmasked_mask.any()) else embeddings.new_tensor(0.0)
+        )
+        loss = (
+            supcon_loss
+            + all_distill_weight * all_distill_loss
+            + unmasked_distill_weight * unmasked_distill_loss
+        )
 
         optimizer.zero_grad(set_to_none=True)
         loss.backward()
@@ -269,7 +292,15 @@ def train_partial_finetune(
         optimizer.step()
 
         if step == 1 or step % max(1, steps // 20) == 0:
-            rows.append({"step": step, "loss": float(loss.detach().cpu())})
+            rows.append(
+                {
+                    "step": step,
+                    "loss": float(loss.detach().cpu()),
+                    "supcon": float(supcon_loss.detach().cpu()),
+                    "all_distill": float(all_distill_loss.detach().cpu()),
+                    "unmasked_distill": float(unmasked_distill_loss.detach().cpu()),
+                }
+            )
     base_model.eval()
     return base_model, pd.DataFrame(rows)
 
@@ -417,6 +448,8 @@ def main() -> None:
     parser.add_argument("--finetune-lr", type=float, default=2e-5)
     parser.add_argument("--finetune-weight-decay", type=float, default=1e-4)
     parser.add_argument("--finetune-temperature", type=float, default=0.07)
+    parser.add_argument("--finetune-all-distill-weight", type=float, default=0.0)
+    parser.add_argument("--finetune-unmasked-distill-weight", type=float, default=0.0)
     parser.add_argument(
         "--finetune-trainable-prefixes",
         default="repeat_3,block8,last_linear,last_bn",
@@ -484,6 +517,7 @@ def main() -> None:
         finetuned_model,
         train_records,
         tensors,
+        baseline_embeddings,
         trainable_prefixes=trainable_prefixes,
         steps=args.finetune_steps,
         identities_per_batch=args.finetune_identities_per_batch,
@@ -491,6 +525,8 @@ def main() -> None:
         lr=args.finetune_lr,
         weight_decay=args.finetune_weight_decay,
         temperature=args.finetune_temperature,
+        all_distill_weight=args.finetune_all_distill_weight,
+        unmasked_distill_weight=args.finetune_unmasked_distill_weight,
         seed=args.seed + 1,
         device=device,
     )
