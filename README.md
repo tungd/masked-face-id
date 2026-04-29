@@ -73,17 +73,17 @@ notebook for the full FaceNet-based benchmark.
 
 ## Colab Agent
 
-For long GPU jobs, use the Git-backed Colab agent instead of driving every cell
-through MCP. MCP only starts the worker once; tasks are then submitted through a
-queue branch and run inside the Colab runtime.
+For long GPU jobs, use an agent instead of driving every cell through MCP. MCP
+only starts the worker once; tasks are then submitted outside the browser and
+run inside the Colab runtime.
 
-See `docs/colab-agent.md`.
+Use the tunnel agent when this local machine can stay online. It runs a local
+HTTP broker, exposes it through Cloudflare Tunnel, and gives Colab only a shared
+bearer token. See `docs/tunnel-colab-agent.md`.
 
-If you do not want to put a GitHub token in Colab, use the Cloudflare Queues
-agent instead. It uses one Cloudflare task queue and one result queue, with no
-GitHub write access from Colab.
-
-See `docs/cloudflare-colab-agent.md`.
+Use the Cloudflare Queues agent when you want a managed durable queue. It uses
+one Cloudflare task queue and one result queue. See
+`docs/cloudflare-colab-agent.md`.
 
 ## Local Validation
 
