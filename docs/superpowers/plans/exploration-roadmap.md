@@ -38,12 +38,14 @@ Mask-presence gated occlusion preprocessing remains the backup.
 - Contrastive residual embedding adapter.
 - ArcFace-style identity-classification fine-tune.
 - Dedicated mask-aware baseline comparison.
+- Periocular-only specialist head with MediaPipe Face Landmarker crops.
 
 ## Still Worth Exploring
 
 - Repeat the pair verifier head across additional seeds and identity splits.
 - Stronger fine-tuning schedules with synthetic mask augmentation.
-- Dual-branch full-face plus periocular training.
+- Dual-branch full-face plus periocular training only if it uses a pretrained
+  or shared representation; the crop-only specialist was weak.
 - ArcFace-style identity-classification fine-tune instead of supervised
   contrastive only.
 - Reliability-aware abstention with learned correctness prediction.

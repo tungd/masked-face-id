@@ -99,6 +99,20 @@ Risk:
 - Requires more training data and a clearer architecture.
 - May drift away from the "adapt an existing recognizer" framing.
 
+Result:
+
+- A MediaPipe Face Landmarker crop-only specialist was implemented and tested
+  on the seed-42 RMFRD split.
+- Baseline full FaceNet masked-unmasked ROC-AUC: `0.8219`
+- Periocular-only masked-unmasked ROC-AUC: `0.6358`
+- Fixed 0.50 fusion masked-unmasked ROC-AUC: `0.7524`
+- Tuned fusion masked-unmasked ROC-AUC: `0.6749`
+
+This rules out the crop-only specialist as a main direction. The calibration
+set strongly preferred a high periocular fusion weight, but that overfit and
+hurt held-out identities. Periocular evidence may still be useful only as part
+of a shared/pretrained dual-branch model, not as a small scratch-trained head.
+
 ## Option: Synthetic Mask Augmentation
 
 Apply synthetic masks to unmasked faces and train an adapter or classifier using
