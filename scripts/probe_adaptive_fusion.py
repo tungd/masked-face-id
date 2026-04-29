@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import json
 import math
 from pathlib import Path
 
@@ -166,6 +167,46 @@ def build_adaptive_scores(wide: pd.DataFrame) -> pd.DataFrame:
     return pd.concat(outputs, ignore_index=True) if outputs else pd.DataFrame()
 
 
+def model_auc(rows: pd.DataFrame, model: str) -> float:
+    labels = rows["label"].to_numpy()
+    scores = rows[model].to_numpy()
+    return float(roc_auc_score(labels, scores)) if len(np.unique(labels)) == 2 else -math.inf
+
+
+def build_gated_scores(wide: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, str]]:
+    calibration = wide[wide["split"] == "calibration"].copy()
+    eval_rows = wide[wide["split"] == "eval"].copy()
+    outputs = []
+    selections: dict[str, str] = {}
+
+    per_case = []
+    for case in CASES:
+        case_train = calibration[calibration["case"] == case]
+        case_eval = eval_rows[eval_rows["case"] == case]
+        if case_train.empty or case_eval.empty:
+            continue
+        best_model = max(RAW_MODELS, key=lambda model: model_auc(case_train, model))
+        selections[case] = best_model
+        out = case_eval[KEY_COLS].copy()
+        out["model"] = "case_gated_best_raw"
+        out["score"] = case_eval[best_model]
+        per_case.append(out)
+    if per_case:
+        outputs.append(pd.concat(per_case, ignore_index=True))
+
+    for gate_name, masked_model in [
+        ("mask_presence_gated_blackout", BLACKOUT),
+        ("mask_presence_gated_blur", BLUR),
+        ("mask_presence_gated_upper", UPPER),
+    ]:
+        out = eval_rows[KEY_COLS].copy()
+        out["model"] = gate_name
+        out["score"] = np.where(eval_rows["case"] == "unmasked-unmasked", eval_rows[BASELINE], eval_rows[masked_model])
+        outputs.append(out)
+
+    return (pd.concat(outputs, ignore_index=True) if outputs else pd.DataFrame(), selections)
+
+
 def build_eval_raw_scores(wide: pd.DataFrame) -> pd.DataFrame:
     eval_rows = wide[wide["split"] == "eval"].copy()
     outputs = []
@@ -184,8 +225,12 @@ def conclusion(metrics: pd.DataFrame) -> str:
 
     baseline_mu = auc(BASELINE, "masked-unmasked")
     baseline_uu = auc(BASELINE, "unmasked-unmasked")
-    adaptive_models = [m for m in metrics["model"].unique() if str(m).startswith("adaptive_")]
-    primary = metrics[(metrics["case"] == "masked-unmasked") & (metrics["model"].isin(adaptive_models))]
+    policy_models = [
+        m
+        for m in metrics["model"].unique()
+        if str(m).startswith("adaptive_") or str(m).startswith("case_gated_") or str(m).startswith("mask_presence_")
+    ]
+    primary = metrics[(metrics["case"] == "masked-unmasked") & (metrics["model"].isin(policy_models))]
     best_model = str(primary.sort_values("roc_auc", ascending=False).iloc[0].model) if len(primary) else "none"
     best_mu = auc(best_model, "masked-unmasked")
     best_uu = auc(best_model, "unmasked-unmasked")
@@ -200,15 +245,15 @@ def conclusion(metrics: pd.DataFrame) -> str:
 
 Recommendation: {verdict}
 
-- Best adaptive model on masked-unmasked: {best_model}
+- Best fusion policy on masked-unmasked: {best_model}
 - Masked-unmasked ROC-AUC baseline: {baseline_mu:.4f}
-- Masked-unmasked ROC-AUC best adaptive: {best_mu:.4f}
+- Masked-unmasked ROC-AUC best policy: {best_mu:.4f}
 - Masked-unmasked gain vs baseline: {gain:.4f}
 - Unmasked-unmasked ROC-AUC baseline: {baseline_uu:.4f}
 - Unmasked-unmasked ROC-AUC best adaptive: {best_uu:.4f}
 - Unmasked regression vs baseline: {regression:.4f}
 
-Interpretation: this probe only tests whether a learned score-fusion policy has
+Interpretation: this probe only tests whether a calibrated score policy has
 signal using already-computed unmasked-recognizer variants. It still needs a
 real mask-aware model for the final comparison.
 
@@ -228,11 +273,13 @@ def main() -> None:
     wide = make_wide(scores, args.seed)
     raw_scores = build_eval_raw_scores(wide)
     adaptive_scores = build_adaptive_scores(wide)
-    all_scores = pd.concat([raw_scores, adaptive_scores], ignore_index=True)
+    gated_scores, selections = build_gated_scores(wide)
+    all_scores = pd.concat([raw_scores, adaptive_scores, gated_scores], ignore_index=True)
     metrics = summarize(all_scores)
 
     all_scores.to_csv(args.out_dir / "adaptive_fusion_probe_pair_scores.csv", index=False)
     metrics.to_csv(args.out_dir / "adaptive_fusion_probe_results.csv", index=False)
+    (args.out_dir / "case_gated_model_selection.json").write_text(json.dumps(selections, indent=2, sort_keys=True))
     text = conclusion(metrics)
     (args.out_dir / "adaptive_fusion_probe_conclusion.md").write_text(text)
     print(metrics.to_string(index=False))
