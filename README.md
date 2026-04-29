@@ -79,6 +79,12 @@ queue branch and run inside the Colab runtime.
 
 See `docs/colab-agent.md`.
 
+If you do not want to put a GitHub token in Colab, use the Cloudflare Queues
+agent instead. It uses one Cloudflare task queue and one result queue, with no
+GitHub write access from Colab.
+
+See `docs/cloudflare-colab-agent.md`.
+
 ## Local Validation
 
 ```bash
