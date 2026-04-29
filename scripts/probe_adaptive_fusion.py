@@ -250,7 +250,7 @@ Recommendation: {verdict}
 - Masked-unmasked ROC-AUC best policy: {best_mu:.4f}
 - Masked-unmasked gain vs baseline: {gain:.4f}
 - Unmasked-unmasked ROC-AUC baseline: {baseline_uu:.4f}
-- Unmasked-unmasked ROC-AUC best adaptive: {best_uu:.4f}
+- Unmasked-unmasked ROC-AUC best policy: {best_uu:.4f}
 - Unmasked regression vs baseline: {regression:.4f}
 
 Interpretation: this probe only tests whether a calibrated score policy has

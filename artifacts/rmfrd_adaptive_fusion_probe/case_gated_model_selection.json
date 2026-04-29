@@ -1,0 +1,5 @@
+{
+  "masked-masked": "lower_blackout_facenet_vggface2",
+  "masked-unmasked": "baseline_facenet_vggface2",
+  "unmasked-unmasked": "baseline_facenet_vggface2"
+}
