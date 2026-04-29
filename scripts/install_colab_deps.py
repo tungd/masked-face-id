@@ -15,6 +15,10 @@ NO_DEPS_PACKAGES = {
     "tqdm": "tqdm>=4.66.0",
 }
 
+WITH_DEPS_PACKAGES = {
+    "mediapipe": "mediapipe>=0.10.0",
+}
+
 CORE_MODULES = ["cv2", "matplotlib", "numpy", "pandas", "PIL", "sklearn", "torch", "torchvision"]
 
 
@@ -24,6 +28,10 @@ def has_module(module: str) -> bool:
 
 def install_no_deps(package: str) -> None:
     subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", "--no-deps", package])
+
+
+def install_with_deps(package: str) -> None:
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", package])
 
 
 def main() -> None:
@@ -41,7 +49,12 @@ def main() -> None:
             install_no_deps(package)
             installed.append(package)
 
-    print("Installed extras without dependencies:" if installed else "Colab extras already available", installed)
+    for module, package in WITH_DEPS_PACKAGES.items():
+        if not has_module(module):
+            install_with_deps(package)
+            installed.append(package)
+
+    print("Installed Colab extras:" if installed else "Colab extras already available", installed)
 
 
 if __name__ == "__main__":
