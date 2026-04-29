@@ -49,13 +49,22 @@ Open `notebooks/validation_spike.ipynb` in Colab, run the setup cells, mount
 Drive or upload the dataset archive, and then run all cells. The notebook saves
 all outputs under `results/`.
 
+The project follows Colab's runtime dependencies. Do not run a broad
+`pip install -r requirements.txt` before the benchmark; that can replace
+Colab's preinstalled `torch`, `numpy`, and related packages. Use the included
+installer when the notebook needs optional packages:
+
+```python
+!python scripts/install_colab_deps.py
+```
+
 For a reliable MCP path, use a tiny bootstrap cell instead of pasting the
-notebook through the browser:
+notebook through the browser. The smoke path does not need the full notebook
+dependencies:
 
 ```python
 !git clone https://github.com/tungd/masked-face-id.git /content/masked-face-id
 %cd /content/masked-face-id
-!pip install -q -r requirements.txt
 !python scripts/run_validation_spike.py --smoke
 ```
 
