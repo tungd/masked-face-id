@@ -41,6 +41,17 @@ MODEL_SPECS = {
     },
 }
 
+ARCFACE_TEMPLATE = np.array(
+    [
+        [38.2946, 51.6963],
+        [73.5318, 51.5014],
+        [56.0252, 71.7366],
+        [41.5493, 92.3655],
+        [70.7299, 92.2041],
+    ],
+    dtype=np.float32,
+)
+
 
 def ensure_official_repo(repo_dir: Path) -> Path:
     if not (repo_dir / "backbones" / "iresnet.py").exists():
@@ -95,14 +106,42 @@ def load_maskaware_model(model_name: str, weight_path: Path, repo_dir: Path, dev
     return model
 
 
-def align_arcface_faces(records: Sequence[FaceRecord], image_size: int, device: str) -> dict[Path, torch.Tensor]:
+def arcface_norm_crop(img: Image.Image, landmarks: np.ndarray, image_size: int) -> torch.Tensor:
+    import cv2
+
+    if image_size != 112:
+        scale = image_size / 112.0
+        dst = ARCFACE_TEMPLATE * scale
+    else:
+        dst = ARCFACE_TEMPLATE
+    matrix, _inliers = cv2.estimateAffinePartial2D(landmarks.astype(np.float32), dst, method=cv2.LMEDS)
+    if matrix is None:
+        raise ValueError("Could not estimate ArcFace alignment transform")
+    aligned = cv2.warpAffine(np.asarray(img), matrix, (image_size, image_size), borderValue=0.0)
+    return torch.from_numpy(aligned).permute(2, 0, 1).to(dtype=torch.float32)
+
+
+def align_arcface_faces(
+    records: Sequence[FaceRecord],
+    image_size: int,
+    device: str,
+    aligner: str,
+) -> dict[Path, torch.Tensor]:
     mtcnn = MTCNN(image_size=image_size, margin=0, post_process=False, device=device)
     tensors: dict[Path, torch.Tensor] = {}
     failures = 0
     for record in tqdm(records, desc="Aligning 112x112 faces"):
         try:
             img = Image.open(record.path).convert("RGB")
-            face = mtcnn(img)
+            if aligner == "mtcnn_crop":
+                face = mtcnn(img)
+            else:
+                boxes, probs, landmarks = mtcnn.detect(img, landmarks=True)
+                if boxes is None or probs is None or landmarks is None or len(boxes) == 0:
+                    face = None
+                else:
+                    best = int(np.nanargmax(probs))
+                    face = arcface_norm_crop(img, landmarks[best], image_size=image_size)
         except Exception:
             face = None
         if face is None:
@@ -247,6 +286,7 @@ def main() -> None:
     parser.add_argument("--pairs-per-case", type=int, default=800)
     parser.add_argument("--facenet-image-size", type=int, default=160)
     parser.add_argument("--arcface-image-size", type=int, default=112)
+    parser.add_argument("--arcface-aligner", choices=["mtcnn_arcface", "mtcnn_crop"], default="mtcnn_arcface")
     parser.add_argument("--batch-size", type=int, default=128)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--no-flip", action="store_true")
@@ -280,7 +320,12 @@ def main() -> None:
     }
 
     repo_dir = ensure_official_repo(args.official_repo_dir)
-    arcface_tensors = align_arcface_faces(eval_records, image_size=args.arcface_image_size, device=device)
+    arcface_tensors = align_arcface_faces(
+        eval_records,
+        image_size=args.arcface_image_size,
+        device=device,
+        aligner=args.arcface_aligner,
+    )
     for model_name in selected_models:
         weight_path = args.weights_dir / MODEL_SPECS[model_name]["filename"]
         if args.download_missing or args.force_download or not weight_path.exists():
