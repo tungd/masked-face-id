@@ -248,7 +248,7 @@ def write_conclusion(metrics: pd.DataFrame, out_dir: Path) -> None:
     baseline_mu = auc(MODEL_BASELINE, "masked-unmasked")
     baseline_uu = auc(MODEL_BASELINE, "unmasked-unmasked")
     candidates = [MODEL_PAIR_HEAD, MODEL_PAIR_HEAD_MASKED_ONLY, MODEL_UPPER_GATE, MODEL_BLUR_GATE, MODEL_BLACKOUT_GATE]
-    best = max(candidates, key=lambda model: auc(model, "masked-unmasked"))
+    best = max(candidates, key=lambda model: (auc(model, "masked-unmasked"), auc(model, "unmasked-unmasked")))
     best_mu = auc(best, "masked-unmasked")
     best_uu = auc(best, "unmasked-unmasked")
     verdict = "PROMISING" if best_mu > baseline_mu and (math.isnan(best_uu) or baseline_uu - best_uu <= 0.03) else "NOT YET PROMISING"

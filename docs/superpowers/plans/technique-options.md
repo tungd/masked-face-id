@@ -11,44 +11,45 @@ On the RMFRD L4 probe this improved masked-unmasked ROC-AUC from `0.9275` to
 `0.9408` while preserving unmasked-unmasked ROC-AUC at `0.9544`. The gain is
 small, but it is simple and defensible as a baseline.
 
-## Best Next Direction: Frozen-Recognizer Adapter
+## Current Main Candidate: Frozen-Recognizer Pair Verifier
 
-Train a small adapter on top of a frozen unmasked recognizer.
+Train a small pair verifier on top of a frozen unmasked recognizer.
 
 Idea:
 
-- Extract FaceNet embeddings for masked and unmasked images.
+- Extract FaceNet embeddings for masked and unmasked images across multiple
+  test-time views.
 - Freeze FaceNet.
-- Train a small linear or MLP projection so masked embeddings move closer to
-  the corresponding identity's unmasked template embeddings.
-- Keep unmasked embeddings either unchanged or lightly projected.
+- Train a small MLP over pair-level features, including per-view similarities
+  and dense embedding interactions.
+- Use the learned verifier only for pairs involving masks.
+- Bypass unmasked-unmasked pairs to the original FaceNet verifier.
 - Evaluate verification with:
   - raw FaceNet,
   - mask-presence gate,
-  - learned adapter,
+  - learned pair verifier,
   - dedicated mask-aware recognizer.
 
 Why this is promising:
 
 - It directly targets the masked-to-unmasked mismatch.
-- It is a small course-project-sized version of template-level knowledge
-  distillation.
+- It is a small course-project-sized adaptation layer rather than a full
+  recognizer retrain.
 - It does not require retraining the full face recognizer.
-- It is more original than hand-tuned score fusion.
+- It is more original than hand-tuned score fusion and stronger than the
+  frozen embedding adapter on the first held-out split.
 
 Probe:
 
-1. Save per-image embeddings from the notebook.
-2. Build identity templates from unmasked calibration images.
-3. Train a linear projection or two-layer MLP on masked calibration embeddings
-   with contrastive or cosine embedding loss.
-4. Evaluate masked-unmasked and unmasked-unmasked pairs on held-out images.
+1. Save per-image multi-view embeddings from the notebook.
+2. Build held-out identity splits.
+3. Train a pair-level MLP on calibration pairs.
+4. Evaluate masked-unmasked and unmasked-unmasked pairs on held-out identities.
 
 Success signal:
 
 - masked-unmasked ROC-AUC improves over full-face baseline,
-- unmasked-unmasked is preserved by bypassing or lightly regularizing the
-  adapter for unmasked pairs,
+- unmasked-unmasked is preserved by bypassing the verifier for unmasked pairs,
 - dedicated mask-aware model remains the expected upper bound.
 
 ## Option: Quality-Aware Score Fusion
@@ -131,18 +132,19 @@ organization already has an unmasked recognizer deployed.
 
 ## Recommended Next Probe
 
-Implement the frozen-recognizer adapter.
+The pair verifier is the strongest current candidate, so the next probes should
+test whether that signal is stable and whether a more recognizer-like training
+objective can beat it.
 
-Minimal version:
+Priority order:
 
-- Save image-level FaceNet embeddings for full-face and lower-blackout variants.
-- Build calibration/eval image splits by identity.
-- Train a linear projection on masked calibration embeddings to match unmasked
-  identity templates.
-- Evaluate raw baseline, gated blackout, and adapter on the same held-out pairs.
+- repeat the pair verifier over additional seeds or identity splits,
+- add a dedicated mask-aware recognizer baseline,
+- try ArcFace-style identity-classification fine-tuning,
+- try dual-branch full-face plus periocular training.
 
-If the adapter beats the gate on masked-unmasked while preserving unmasked
-performance, the project idea becomes substantially stronger.
+If the pair verifier survives repeated splits and remains competitive with a
+dedicated mask-aware recognizer, it is a defensible final project direction.
 
 ## Frozen-Recognizer Adapter Probe Result
 
@@ -216,3 +218,25 @@ on this split.
 The contrastive residual adapter did not work: it reduced masked-unmasked
 ROC-AUC to about `0.706` even though training loss dropped quickly. The likely
 failure mode is calibration-identity overfitting.
+
+## Pair Verifier Head Probe Result
+
+The frozen-recognizer pair verifier is the strongest current candidate.
+
+- Baseline full FaceNet masked-unmasked ROC-AUC: `0.7453`
+- Best practical candidate: `pair_head_masked_cases_only`
+- Best masked-unmasked ROC-AUC: `0.8057`
+- Gain vs baseline: `+0.0604`
+- Baseline unmasked-unmasked ROC-AUC: `0.9668`
+- Best unmasked-unmasked ROC-AUC: `0.9668`
+- Unmasked-unmasked regression: `0.0000`
+
+The all-cases pair head reaches the same masked-unmasked ROC-AUC but regresses
+unmasked-unmasked ROC-AUC to `0.9543`. The masked-only policy is preferable:
+use the learned verifier only when a mask is involved, and send
+unmasked-unmasked pairs through the original recognizer.
+
+This is more promising than the partial fine-tuning probe on the first split:
+the gain is larger, the recognizer remains frozen, and the unmasked case is
+preserved by construction. The remaining risk is overfitting to one identity
+split, so repeated seeds and a dedicated mask-aware baseline are now required.

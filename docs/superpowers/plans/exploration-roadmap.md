@@ -2,12 +2,17 @@
 
 ## Current Main Candidate
 
-Partial fine-tuning with frozen-embedding distillation is the first real
-candidate.
+The frozen-recognizer pair verifier head is the strongest current candidate.
 
-- It trains the recognizer rather than only adding hand rules.
-- It improved masked-unmasked ROC-AUC by `+0.0267` on the held-out RMFRD split.
-- It kept unmasked-unmasked regression to `0.0153`.
+- It keeps FaceNet frozen and trains only a pair-level MLP over multi-view
+  embedding features.
+- It improved masked-unmasked ROC-AUC by `+0.0604` on the held-out RMFRD split.
+- The masked-only policy preserves unmasked-unmasked ROC-AUC exactly by
+  bypassing those pairs to raw FaceNet.
+
+Partial fine-tuning with frozen-embedding distillation is the secondary real
+candidate. It improved masked-unmasked ROC-AUC by `+0.0267`, but it still
+regressed unmasked-unmasked ROC-AUC by `0.0153`.
 
 ## Plan B
 
@@ -27,7 +32,7 @@ Mask-presence gated occlusion preprocessing remains the backup.
 
 ## Still Worth Exploring
 
-- Frozen recognizer pair verifier head over multi-view embeddings.
+- Repeat the pair verifier head across additional seeds and identity splits.
 - Stronger fine-tuning schedules with synthetic mask augmentation.
 - Dual-branch full-face plus periocular training.
 - ArcFace-style identity-classification fine-tune instead of supervised
@@ -37,6 +42,7 @@ Mask-presence gated occlusion preprocessing remains the backup.
 
 ## Next Probe
 
-Train a pair-level verifier head while keeping FaceNet frozen. This tests
-whether the adaptation can happen entirely at the verification layer using
-multi-view embedding features, without changing the recognizer.
+Try a recognizer-like training objective that is still course-sized:
+ArcFace-style identity-classification fine-tuning, optionally with synthetic
+mask augmentation. This tests whether representation learning can close the
+gap further than the pair verifier without overfitting the held-out identities.
