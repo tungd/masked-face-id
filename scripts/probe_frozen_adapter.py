@@ -229,10 +229,54 @@ def train_ridge_adapter(
     return weights
 
 
+def training_matrices(
+    records: Sequence[FaceRecord],
+    embeddings: dict[Path, dict[str, np.ndarray]],
+    templates: dict[str, np.ndarray],
+    source: str,
+) -> tuple[np.ndarray, np.ndarray]:
+    xs = []
+    ys = []
+    for record in records:
+        if record.condition != "masked" or record.path not in embeddings or record.identity not in templates:
+            continue
+        xs.append(embeddings[record.path][source])
+        ys.append(templates[record.identity])
+    if not xs:
+        raise ValueError(f"No masked training embeddings for source={source}")
+    return np.stack(xs), np.stack(ys)
+
+
+def train_orthogonal_adapter(
+    records: Sequence[FaceRecord],
+    embeddings: dict[Path, dict[str, np.ndarray]],
+    templates: dict[str, np.ndarray],
+    source: str,
+) -> np.ndarray:
+    x, y = training_matrices(records, embeddings, templates, source)
+    u, _s, vt = np.linalg.svd(x.T @ y, full_matrices=False)
+    return u @ vt
+
+
+def train_mean_shift_adapter(
+    records: Sequence[FaceRecord],
+    embeddings: dict[Path, dict[str, np.ndarray]],
+    templates: dict[str, np.ndarray],
+    source: str,
+) -> np.ndarray:
+    x, y = training_matrices(records, embeddings, templates, source)
+    return np.mean(y - x, axis=0)
+
+
 def apply_adapter(vector: np.ndarray, weights: np.ndarray) -> np.ndarray:
     projected = np.concatenate([vector, np.ones(1)]) @ weights
     norm = np.linalg.norm(projected)
     return projected / norm if norm else projected
+
+
+def normalize(vector: np.ndarray) -> np.ndarray:
+    norm = np.linalg.norm(vector)
+    return vector / norm if norm else vector
 
 
 def records_by_identity_condition(records: Sequence[FaceRecord]) -> dict[str, dict[str, list[FaceRecord]]]:
@@ -277,18 +321,27 @@ def pair_vector(
     condition: str,
     model: str,
     embeddings: dict[Path, dict[str, np.ndarray]],
-    full_weights: np.ndarray,
-    blackout_weights: np.ndarray,
+    adapters: dict[str, np.ndarray],
 ) -> np.ndarray:
     emb = embeddings[path]
     if model == "baseline_full":
         return emb["full"]
     if model == "gated_blackout_all_mask_pairs":
         return emb["full"] if condition == "unmasked" else emb["blackout"]
-    if model == "adapter_full_masked_only":
-        return apply_adapter(emb["full"], full_weights) if condition == "masked" else emb["full"]
-    if model == "adapter_blackout_masked_only":
-        return apply_adapter(emb["blackout"], blackout_weights) if condition == "masked" else emb["full"]
+    if condition == "unmasked":
+        return emb["full"]
+    if model == "ridge_full_masked_only":
+        return apply_adapter(emb["full"], adapters["ridge_full"])
+    if model == "ridge_blackout_masked_only":
+        return apply_adapter(emb["blackout"], adapters["ridge_blackout"])
+    if model == "orthogonal_full_masked_only":
+        return normalize(emb["full"] @ adapters["orthogonal_full"])
+    if model == "orthogonal_blackout_masked_only":
+        return normalize(emb["blackout"] @ adapters["orthogonal_blackout"])
+    if model == "mean_shift_full_masked_only":
+        return normalize(emb["full"] + adapters["mean_shift_full"])
+    if model == "mean_shift_blackout_masked_only":
+        return normalize(emb["blackout"] + adapters["mean_shift_blackout"])
     raise KeyError(model)
 
 
@@ -314,14 +367,17 @@ def best_threshold(labels: np.ndarray, scores: np.ndarray) -> dict[str, float]:
 def evaluate(
     pairs: Sequence[Pair],
     embeddings: dict[Path, dict[str, np.ndarray]],
-    full_weights: np.ndarray,
-    blackout_weights: np.ndarray,
+    adapters: dict[str, np.ndarray],
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     models = [
         "baseline_full",
         "gated_blackout_all_mask_pairs",
-        "adapter_full_masked_only",
-        "adapter_blackout_masked_only",
+        "ridge_full_masked_only",
+        "ridge_blackout_masked_only",
+        "orthogonal_full_masked_only",
+        "orthogonal_blackout_masked_only",
+        "mean_shift_full_masked_only",
+        "mean_shift_blackout_masked_only",
     ]
     score_rows = []
     for model in models:
@@ -330,8 +386,8 @@ def evaluate(
             if pair.left not in embeddings or pair.right not in embeddings:
                 skipped += 1
                 continue
-            left = pair_vector(pair.left, pair.left_condition, model, embeddings, full_weights, blackout_weights)
-            right = pair_vector(pair.right, pair.right_condition, model, embeddings, full_weights, blackout_weights)
+            left = pair_vector(pair.left, pair.left_condition, model, embeddings, adapters)
+            right = pair_vector(pair.right, pair.right_condition, model, embeddings, adapters)
             score_rows.append(
                 {
                     "model": model,
@@ -370,7 +426,15 @@ def write_conclusion(metrics: pd.DataFrame, out_dir: Path) -> None:
 
     baseline_mu = auc("baseline_full", "masked-unmasked")
     baseline_uu = auc("baseline_full", "unmasked-unmasked")
-    candidates = ["gated_blackout_all_mask_pairs", "adapter_full_masked_only", "adapter_blackout_masked_only"]
+    candidates = [
+        "gated_blackout_all_mask_pairs",
+        "ridge_full_masked_only",
+        "ridge_blackout_masked_only",
+        "orthogonal_full_masked_only",
+        "orthogonal_blackout_masked_only",
+        "mean_shift_full_masked_only",
+        "mean_shift_blackout_masked_only",
+    ]
     best = max(candidates, key=lambda model: auc(model, "masked-unmasked"))
     best_mu = auc(best, "masked-unmasked")
     best_uu = auc(best, "unmasked-unmasked")
@@ -434,10 +498,16 @@ def main() -> None:
     all_records = train_records + eval_records
     embeddings = compute_embeddings(all_records, image_size=args.image_size, device=device)
     templates = build_templates(train_records, embeddings)
-    full_weights = train_ridge_adapter(train_records, embeddings, templates, source="full", ridge=args.ridge)
-    blackout_weights = train_ridge_adapter(train_records, embeddings, templates, source="blackout", ridge=args.ridge)
+    adapters = {
+        "ridge_full": train_ridge_adapter(train_records, embeddings, templates, source="full", ridge=args.ridge),
+        "ridge_blackout": train_ridge_adapter(train_records, embeddings, templates, source="blackout", ridge=args.ridge),
+        "orthogonal_full": train_orthogonal_adapter(train_records, embeddings, templates, source="full"),
+        "orthogonal_blackout": train_orthogonal_adapter(train_records, embeddings, templates, source="blackout"),
+        "mean_shift_full": train_mean_shift_adapter(train_records, embeddings, templates, source="full"),
+        "mean_shift_blackout": train_mean_shift_adapter(train_records, embeddings, templates, source="blackout"),
+    }
     pairs = sample_pairs(eval_records, args.pairs_per_case, args.seed)
-    scores, metrics = evaluate(pairs, embeddings, full_weights, blackout_weights)
+    scores, metrics = evaluate(pairs, embeddings, adapters)
 
     scores.to_csv(args.out_dir / "frozen_adapter_probe_pair_scores.csv", index=False)
     metrics.to_csv(args.out_dir / "frozen_adapter_probe_results.csv", index=False)
