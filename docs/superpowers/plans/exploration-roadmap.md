@@ -6,7 +6,8 @@ The frozen-recognizer pair verifier head is the strongest current candidate.
 
 - It keeps FaceNet frozen and trains only a pair-level MLP over multi-view
   embedding features.
-- It improved masked-unmasked ROC-AUC by `+0.0604` on the held-out RMFRD split.
+- It improved masked-unmasked ROC-AUC by `+0.0604` on seed 42 and `+0.0273`
+  on seed 7.
 - The masked-only policy preserves unmasked-unmasked ROC-AUC exactly by
   bypassing those pairs to raw FaceNet.
 
@@ -29,6 +30,7 @@ Mask-presence gated occlusion preprocessing remains the backup.
 - Frozen residual / ridge / mean-shift embedding adapters.
 - Full-coverage test-time occlusion ensembles.
 - Contrastive residual embedding adapter.
+- ArcFace-style identity-classification fine-tune.
 
 ## Still Worth Exploring
 
@@ -42,7 +44,6 @@ Mask-presence gated occlusion preprocessing remains the backup.
 
 ## Next Probe
 
-Try a recognizer-like training objective that is still course-sized:
-ArcFace-style identity-classification fine-tuning, optionally with synthetic
-mask augmentation. This tests whether representation learning can close the
-gap further than the pair verifier without overfitting the held-out identities.
+Add a dedicated mask-aware recognizer baseline and compare it against the
+pair verifier. The project does not need to beat that baseline, but we need to
+know the gap.

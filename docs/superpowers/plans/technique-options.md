@@ -223,6 +223,8 @@ failure mode is calibration-identity overfitting.
 
 The frozen-recognizer pair verifier is the strongest current candidate.
 
+Seed 42:
+
 - Baseline full FaceNet masked-unmasked ROC-AUC: `0.7453`
 - Best practical candidate: `pair_head_masked_cases_only`
 - Best masked-unmasked ROC-AUC: `0.8057`
@@ -231,12 +233,41 @@ The frozen-recognizer pair verifier is the strongest current candidate.
 - Best unmasked-unmasked ROC-AUC: `0.9668`
 - Unmasked-unmasked regression: `0.0000`
 
+Seed 7:
+
+- Baseline full FaceNet masked-unmasked ROC-AUC: `0.7965`
+- Best practical candidate: `pair_head_masked_cases_only`
+- Best masked-unmasked ROC-AUC: `0.8238`
+- Gain vs baseline: `+0.0273`
+- Baseline unmasked-unmasked ROC-AUC: `0.9671`
+- Best unmasked-unmasked ROC-AUC: `0.9671`
+- Unmasked-unmasked regression: `0.0000`
+
 The all-cases pair head reaches the same masked-unmasked ROC-AUC but regresses
 unmasked-unmasked ROC-AUC to `0.9543`. The masked-only policy is preferable:
 use the learned verifier only when a mask is involved, and send
 unmasked-unmasked pairs through the original recognizer.
 
-This is more promising than the partial fine-tuning probe on the first split:
-the gain is larger, the recognizer remains frozen, and the unmasked case is
-preserved by construction. The remaining risk is overfitting to one identity
-split, so repeated seeds and a dedicated mask-aware baseline are now required.
+This is more promising than the partial fine-tuning probe: the gain is larger
+on seed 42, still positive on seed 7, the recognizer remains frozen, and the
+unmasked case is preserved by construction. The remaining risk is the gap to a
+dedicated mask-aware recognizer.
+
+## ArcFace Fine-Tune Probe Result
+
+The ArcFace-style identity-classification fine-tune is not promising as
+configured.
+
+- Baseline full FaceNet masked-unmasked ROC-AUC: `0.7453`
+- Best ArcFace candidate: `arcface_finetune_masked_pairs_only`
+- Best masked-unmasked ROC-AUC: `0.6922`
+- Gain vs baseline: `-0.0531`
+- Baseline unmasked-unmasked ROC-AUC: `0.9668`
+- Best unmasked-unmasked ROC-AUC: `0.9668`
+- Unmasked-unmasked regression: `0.0000`
+
+The training loss drops quickly, but held-out masked-unmasked verification gets
+worse. The likely failure mode is identity-classification overfitting to the
+training identities, even with frozen-embedding distillation. This result
+demotes ArcFace fine-tuning below both the pair verifier and the distilled
+supervised-contrastive partial fine-tune.
