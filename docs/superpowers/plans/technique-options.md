@@ -186,3 +186,33 @@ This suggests a possible project pivot: not "we always improve masked
 recognition", but "we adapt an unmasked recognizer with mask-aware reliability
 estimation and abstention." That is more original, but it needs careful
 evaluation with coverage-risk curves and a dedicated mask-aware baseline.
+
+## Training Adaptation Probe Result
+
+The first actual training probe found a stronger direction than the frozen
+adapter and test-time ensemble: partial fine-tuning with frozen-embedding
+distillation.
+
+Three configurations were tested on the same held-out RMFRD split:
+
+- Unregularized large-tail fine-tune:
+  - masked-unmasked ROC-AUC: `0.7606`
+  - gain vs baseline: `+0.0153`
+  - unmasked-unmasked regression: `0.0695`
+- Small-tail fine-tune with distillation:
+  - masked-unmasked ROC-AUC: `0.7419`
+  - gain vs baseline: `-0.0034`
+  - unmasked-unmasked regression: `0.0304`
+- Large-tail fine-tune with distillation:
+  - masked-unmasked ROC-AUC: `0.7721`
+  - gain vs baseline: `+0.0267`
+  - unmasked-unmasked regression: `0.0153`
+
+The best configuration unfreezes `repeat_3`, `block8`, `last_linear`, and
+`last_bn`, trains with supervised contrastive batches, and regularizes against
+the frozen FaceNet embedding space. This clears the original feasibility rule
+on this split.
+
+The contrastive residual adapter did not work: it reduced masked-unmasked
+ROC-AUC to about `0.706` even though training loss dropped quickly. The likely
+failure mode is calibration-identity overfitting.

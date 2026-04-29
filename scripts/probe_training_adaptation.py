@@ -415,7 +415,8 @@ Recommendation: {verdict}
 
 This probe tests actual training: a supervised contrastive residual adapter on
 frozen embeddings and partial supervised-contrastive fine-tuning of the FaceNet
-tail. Evaluation identities are disjoint from training identities.
+tail, optionally regularized by frozen-embedding distillation. Evaluation
+identities are disjoint from training identities.
 """
     (out_dir / "training_adaptation_conclusion.md").write_text(text)
     print(text)
