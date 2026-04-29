@@ -163,3 +163,26 @@ does not touch unmasked-unmasked comparisons.
 This is not enough for a final claim yet. The next evaluation should compare
 the adapter against a dedicated mask-aware recognizer and repeat the adapter
 probe across at least one additional split or seed.
+
+## Test-Time Occlusion Ensemble Probe Result
+
+The full-coverage ensemble idea did not beat the full-face baseline on the
+held-out split.
+
+- Baseline full FaceNet masked-unmasked ROC-AUC: `0.7646`
+- Best full-coverage ensemble: `ensemble_top2_safe`
+- Best full-coverage ensemble ROC-AUC: `0.7629`
+- Gain vs baseline: `-0.0017`
+
+The more interesting signal is reliability-aware selective verification. When
+ranking pairs by occlusion-view disagreement and keeping only 80% coverage:
+
+- Best policy: `gated_upper_only`
+- Masked-unmasked ROC-AUC at 80% coverage: `0.7807`
+- Best ensemble policy: `ensemble_disagreement_penalty_0.50`
+- Ensemble masked-unmasked ROC-AUC at 80% coverage: `0.7729`
+
+This suggests a possible project pivot: not "we always improve masked
+recognition", but "we adapt an unmasked recognizer with mask-aware reliability
+estimation and abstention." That is more original, but it needs careful
+evaluation with coverage-risk curves and a dedicated mask-aware baseline.

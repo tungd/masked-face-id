@@ -268,7 +268,6 @@ def write_conclusion(metrics: pd.DataFrame, selective: pd.DataFrame, out_dir: Pa
     selective_mu = selective[
         (selective["case"] == "masked-unmasked")
         & (selective["coverage"] == 0.8)
-        & (selective["model"].isin(candidates))
     ]
     best_selective = "none"
     best_selective_auc = math.nan
@@ -277,7 +276,7 @@ def write_conclusion(metrics: pd.DataFrame, selective: pd.DataFrame, out_dir: Pa
         best_selective = str(top.model)
         best_selective_auc = float(top.roc_auc)
 
-    verdict = "PROMISING" if best_mu > max(baseline_mu, backup_mu) else "WEAKER THAN BACKUP"
+    verdict = "FULL-COVERAGE PROMISING" if best_mu > baseline_mu else "NO FULL-COVERAGE GAIN"
     text = f"""# Occlusion Ensemble Probe Conclusion
 
 Recommendation: {verdict}
@@ -290,7 +289,7 @@ Recommendation: {verdict}
 - Best ensemble gain vs backup: {best_mu - backup_mu:.4f}
 - Baseline unmasked-unmasked ROC-AUC: {baseline_uu:.4f}
 - Best ensemble unmasked-unmasked ROC-AUC: {best_uu:.4f}
-- Best selective ensemble at 80% masked-unmasked coverage: {best_selective}
+- Best selective policy at 80% masked-unmasked coverage: {best_selective}
 - Best selective 80% masked-unmasked ROC-AUC: {best_selective_auc:.4f}
 
 This probe keeps FaceNet frozen and evaluates test-time occlusion evidence:
