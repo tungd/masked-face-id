@@ -71,6 +71,14 @@ dependencies:
 After mounting a real dataset at `/content/pku_masked_face_subset`, run the
 notebook for the full FaceNet-based benchmark.
 
+## Colab Agent
+
+For long GPU jobs, use the Git-backed Colab agent instead of driving every cell
+through MCP. MCP only starts the worker once; tasks are then submitted through a
+queue branch and run inside the Colab runtime.
+
+See `docs/colab-agent.md`.
+
 ## Local Validation
 
 ```bash
