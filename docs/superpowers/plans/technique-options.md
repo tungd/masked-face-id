@@ -143,3 +143,23 @@ Minimal version:
 
 If the adapter beats the gate on masked-unmasked while preserving unmasked
 performance, the project idea becomes substantially stronger.
+
+## Frozen-Recognizer Adapter Probe Result
+
+The initial held-out RMFRD probe is a weak positive signal.
+
+- Baseline full FaceNet masked-unmasked ROC-AUC: `0.7645`
+- Best adapter: `mean_shift_full_masked_only`
+- Best masked-unmasked ROC-AUC: `0.7775`
+- Gain vs baseline: `+0.0130`
+- Unmasked-unmasked ROC-AUC: unchanged at `0.9710`
+
+The unconstrained ridge adapters improved masked-masked pairs but hurt
+masked-unmasked pairs, suggesting that a free linear projection overfits the
+calibration identities. The constrained mean-shift adapter is more useful for
+the project framing because it is simple, frozen-recognizer compatible, and
+does not touch unmasked-unmasked comparisons.
+
+This is not enough for a final claim yet. The next evaluation should compare
+the adapter against a dedicated mask-aware recognizer and repeat the adapter
+probe across at least one additional split or seed.

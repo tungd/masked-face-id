@@ -453,8 +453,9 @@ Recommendation: {verdict}
 - Unmasked-unmasked ROC-AUC best method: {best_uu:.4f}
 - Unmasked regression vs baseline: {regression:.4f}
 
-This probe trains a ridge-linear adapter on calibration identities only and
-evaluates on held-out identities. FaceNet remains frozen.
+This probe trains lightweight adapters on calibration identities only and
+evaluates on held-out identities. FaceNet remains frozen. Tested adapters are
+ridge-linear projection, orthogonal projection, and mean shift.
 """
     (out_dir / "frozen_adapter_probe_conclusion.md").write_text(text)
     print(text)
