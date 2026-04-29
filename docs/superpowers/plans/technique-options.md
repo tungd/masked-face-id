@@ -122,13 +122,37 @@ related work, but it is not the best implementation path.
 
 ## Dedicated Mask-Aware Baseline
 
-We still need a real mask-aware recognizer for the final comparison. The main
-candidate is MaskInv KD / ElasticFace-Arc from the official
-`fdbtrs/Masked-Face-Recognition-KD` repository.
+The dedicated baseline has now been evaluated with official MaskInv-family
+IResNet-100 checkpoints from `fdbtrs/Masked-Face-Recognition-KD`.
 
-The final story should not require beating this model. The project can argue
-that a frozen-recognizer adapter is simpler, model-agnostic, and useful when an
-organization already has an unmasked recognizer deployed.
+Important implementation detail: these checkpoints need 112x112 ArcFace-style
+5-landmark alignment. A naive MTCNN crop produced misleadingly weak results.
+
+Seed 42:
+
+- Baseline FaceNet masked-unmasked ROC-AUC: `0.7453`
+- Best dedicated checkpoint: `maskinv_lg`
+- Best dedicated masked-unmasked ROC-AUC: `0.8273`
+- Gain vs FaceNet baseline: `+0.0820`
+- Pair-head masked-unmasked ROC-AUC: `0.8057`
+- Dedicated gap vs pair head: `+0.0216`
+- Dedicated unmasked-unmasked regression vs FaceNet: `0.0086`
+
+Seed 7:
+
+- Baseline FaceNet masked-unmasked ROC-AUC: `0.7965`
+- Best dedicated checkpoint: `elasticface_arc_aug`
+- Best dedicated masked-unmasked ROC-AUC: `0.8724`
+- Gain vs FaceNet baseline: `+0.0759`
+- Pair-head masked-unmasked ROC-AUC: `0.8238`
+- Dedicated gap vs pair head: `+0.0486`
+- Dedicated unmasked-unmasked regression vs FaceNet: `0.0031`
+
+The final story should not claim that the frozen pair verifier beats a purpose
+built masked recognizer. The defensible claim is that the pair verifier is a
+small, model-agnostic adaptation layer for an existing unmasked recognizer that
+recovers meaningful masked-unmasked performance, while the dedicated model
+remains the upper bound.
 
 ## Recommended Next Probe
 
@@ -138,13 +162,15 @@ objective can beat it.
 
 Priority order:
 
-- repeat the pair verifier over additional seeds or identity splits,
-- add a dedicated mask-aware recognizer baseline,
-- try ArcFace-style identity-classification fine-tuning,
-- try dual-branch full-face plus periocular training.
+- add pair-head feature ablations,
+- measure inference/storage cost of pair head vs dedicated IResNet-100,
+- repeat the final comparison on one more seed or dataset if time allows,
+- try dual-branch full-face plus periocular training only if we need another
+  exploratory branch.
 
-If the pair verifier survives repeated splits and remains competitive with a
-dedicated mask-aware recognizer, it is a defensible final project direction.
+The pair verifier has survived repeated splits and is competitive enough to be
+useful, but it does not beat the dedicated model. That is a clean and honest
+final project framing.
 
 ## Frozen-Recognizer Adapter Probe Result
 

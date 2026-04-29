@@ -15,6 +15,12 @@ Partial fine-tuning with frozen-embedding distillation is the secondary real
 candidate. It improved masked-unmasked ROC-AUC by `+0.0267`, but it still
 regressed unmasked-unmasked ROC-AUC by `0.0153`.
 
+The dedicated mask-aware baseline is stronger than the pair head, as expected.
+With official MaskInv-family checkpoints and ArcFace alignment, the best
+dedicated checkpoint beat the pair head by `+0.0216` on seed 42 and `+0.0486`
+on seed 7. This does not invalidate the project direction; it sets the upper
+bound and clarifies the claim.
+
 ## Plan B
 
 Mask-presence gated occlusion preprocessing remains the backup.
@@ -31,6 +37,7 @@ Mask-presence gated occlusion preprocessing remains the backup.
 - Full-coverage test-time occlusion ensembles.
 - Contrastive residual embedding adapter.
 - ArcFace-style identity-classification fine-tune.
+- Dedicated mask-aware baseline comparison.
 
 ## Still Worth Exploring
 
@@ -44,6 +51,8 @@ Mask-presence gated occlusion preprocessing remains the backup.
 
 ## Next Probe
 
-Add a dedicated mask-aware recognizer baseline and compare it against the
-pair verifier. The project does not need to beat that baseline, but we need to
-know the gap.
+Turn the current result into the final project framing: a lightweight
+verification adapter for deployments that already have an unmasked recognizer,
+benchmarked against a stronger dedicated mask-aware recognizer. The next
+technical probe should measure cost/complexity and add a small ablation of the
+pair-head features.
