@@ -1,247 +1,72 @@
-## Project Overview
+# Artifact Index
 
-This project implements a phase-based evaluation pipeline to test whether removing mask-occluded facial regions before embedding extraction improves face recognition performance on masked faces.
+This directory stores compact summaries from completed masked face verification
+experiments. Large raw score logs, datasets, checkpoints, and local backups are
+not checked in.
 
-### Architecture
+The current main result is the FaceNet pair-head robustness run:
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    Mask Recognition Pipeline                     │
-├─────────────────────────────────────────────────────────────────┤
-│  Phase 1: Baseline                                              │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐     │
-│  │ Face Image  │→ │ FaceNet     │→ │ Embedding (512-dim) │     │
-│  └─────────────┘  └─────────────┘  └─────────────────────┘     │
-├─────────────────────────────────────────────────────────────────┤
-│  Phase 2: Mask Exclusion                                        │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐             │
-│  │ Face Image  │→ │ MediaPipe   │→ │ Landmarks   │             │
-│  └─────────────┘  └─────────────┘  └──────┬──────┘             │
-│                                    ┌──────▼──────┐             │
-│                                    │ Mask Region │             │
-│                                    │ Exclusion   │             │
-│                                    └──────┬──────┘             │
-│  ┌─────────────┐  ┌─────────────┐  ┌──────▼──────┐             │
-│  │ Embedding   │← │ FaceNet     │← │ Masked Img  │             │
-│  └─────────────┘  └─────────────┘  └─────────────┘             │
-├─────────────────────────────────────────────────────────────────┤
-│  Phase 3: Comparison                                            │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │  Baseline vs Mask Exclusion: Accuracy, ROC-AUC, FAR/FRR │   │
-│  └─────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────┘
-```
+- [rmfd_pair_head_robustness_seed42_7_99/](rmfd_pair_head_robustness_seed42_7_99/)
 
-### Tech Stack
+That artifact evaluates the frozen FaceNet pair-head method across three
+identity splits, feature ablations, and calibration-derived thresholds.
 
-| Component | Technology |
-|-----------|------------|
-| ML Framework | Apple MLX |
-| Base Model | FaceNet (InceptionResNetV1) |
-| Face Detection | MediaPipe Face Mesh (468 landmarks) |
-| Dataset | MaskedFace-Net (137K images) |
-| Notebooks | Jupyter + ipywidgets |
-| Visualization | Matplotlib, Seaborn |
+| Result | Value |
+|---|---:|
+| Raw FaceNet masked-unmasked ROC-AUC | `0.7972 +/- 0.0027` |
+| Pair head masked-only masked-unmasked ROC-AUC | `0.8228 +/- 0.0158` |
+| Mean ROC-AUC gain | `+0.0256` |
+| Preserved unmasked-unmasked ROC-AUC | `0.9694 +/- 0.0047` |
 
----
+The ranking gain is the main positive result. Calibration remains open: at a
+threshold selected on calibration pairs for nominal FAR `0.05`, the full
+pair-head did not improve TAR over raw FaceNet.
 
-## Implementation Status
+## Main Artifacts
 
-### ✅ Completed
+| Path | Purpose |
+|---|---|
+| `rmfd_pair_head_robustness_seed42_7_99/` | Main three-seed robustness, ablation, and selected threshold summary |
+| `insightface_pair_head_seed42/` | InsightFace `buffalo_l` negative control on the seed-42 split |
+| `rmfd_pair_verifier_head_full_seed42/` | Single-seed full pair-head run |
+| `rmfd_pretrain_adapter_pair_head_seed42/` | Residual adapter pretraining negative result |
+| `rmfd_paired_identity_scan/` | Scan showing usable paired RMFD/RMFRD identities |
+| `rmfrd_maskaware_baseline_seed42/` | Dedicated mask-aware ceiling, seed 42 |
+| `rmfrd_maskaware_baseline_seed7/` | Dedicated mask-aware ceiling, seed 7 |
+| `lfw_synthetic_train_rmfrd_eval_seed42/` | Synthetic LFW training with real RMFRD evaluation |
 
-| Component | Status | Files |
-|-----------|--------|-------|
-| **Project Setup** | ✅ Complete | `requirements.txt`, `.gitignore`, package structure |
-| **Data Module** | ✅ Complete | `src/data/download.py`, `src/data/dataset.py` |
-| **Model Module** | ✅ Complete | `src/models/facenet.py` |
-| **Landmarks Module** | ✅ Complete | `src/landmarks/detector.py` |
-| **Evaluation Module** | ✅ Complete | `src/evaluation/metrics.py` |
-| **Notebooks** | ✅ Complete | 5 notebooks (01-05) |
-| **Unit Tests** | ✅ Complete | Tests for all modules |
+## Earlier Probes
 
-### 📊 Progress Summary
+The remaining directories are retained as negative or exploratory probes:
 
-```
-Core Implementation
-├── Data Pipeline      [██████████] 100%
-├── FaceNet Model      [██████████] 100%
-├── Landmark Detector  [██████████] 100%
-├── Evaluation Metrics [██████████] 100%
-└── Jupyter Notebooks  [██████████] 100%
+- `rmfrd_frozen_adapter_probe/`
+- `rmfrd_occlusion_ensemble_probe/`
+- `rmfrd_adaptive_fusion_probe/`
+- `rmfrd_arcface_finetune_probe/`
+- `rmfrd_periocular_specialist_seed42/`
+- `rmfrd_training_adaptation_probe/`
+- `rmfrd_pair_verifier_head_probe/`
+- `rmfrd_pair_verifier_head_seed7/`
+- `rmfrd_cpu_real/`
+- `rmfrd_gpu_feasibility/`
 
-Testing & Validation
-├── Unit Tests         [██████████] 100%
-├── Integration Tests  [          ]   0%
-└── Results Generation [██        ]  20%
+These are useful context, but the frozen project claim should be based on
+[docs/final-report.md](../docs/final-report.md) and the three-seed robustness
+artifact.
 
-Documentation
-├── Design Document    [██████████] 100%
-├── Implementation Plan[██████████] 100%
-└── Results Summary    [          ]   0%
-```
+## Reproducibility Notes
 
-### 📁 Project Structure
+For future runs, save the raw generated score CSVs outside git or in a release
+artifact. They are needed for post-hoc threshold calibration, bootstrap
+confidence intervals, and cost/simplification analysis.
 
-```
-masked-face-id/
-├── notebooks/
-│   ├── 01_data_exploration.ipynb    ✅ Data download & exploration
-│   ├── 02_baseline_facenet.ipynb    ✅ Baseline FaceNet evaluation
-│   ├── 03_mask_exclusion.ipynb      ✅ Mask exclusion implementation
-│   ├── 04_analysis.ipynb            ✅ Results comparison & analysis
-│   └── 05_landmark_demo.ipynb       ✅ Landmark detection demo
-├── src/
-│   ├── data/
-│   │   ├── download.py              ✅ MaskedFace-Net downloader
-│   │   └── dataset.py               ✅ Dataset loader & pair generator
-│   ├── models/
-│   │   └── facenet.py               ✅ FaceNet for MLX
-│   ├── landmarks/
-│   │   └── detector.py              ✅ MediaPipe landmark detection
-│   └── evaluation/
-│       └── metrics.py               ✅ Accuracy, ROC-AUC, FAR/FRR
-├── tests/
-│   ├── test_download.py             ✅
-│   ├── test_dataset.py              ✅
-│   ├── test_facenet.py              ✅
-│   ├── test_landmarks.py            ✅
-│   └── test_metrics.py              ✅
-├── docs/
-│   └── superpowers/
-│       ├── specs/                   ✅ Design document
-│       └── plans/                   ✅ Implementation plan
-├── results/                         📁 Output directory
-├── data/                            📁 Data directory
-└── models/                          📁 Pretrained weights
-```
+Recommended files to retain per run:
 
-### 📋 Module Details
-
-| Module | LOC | Description |
-|--------|-----|-------------|
-| `src/data/download.py` | 93 | MaskedFace-Net download utilities |
-| `src/data/dataset.py` | 154 | Dataset loading, image pair generation |
-| `src/models/facenet.py` | 135 | FaceNet InceptionResNetV1 for MLX |
-| `src/landmarks/detector.py` | 136 | MediaPipe Face Mesh integration |
-| `src/evaluation/metrics.py` | 142 | Verification metrics (accuracy, ROC-AUC, FAR@FRR) |
-
----
-
-## Setup
-
-```bash
-# Create virtual environment
-python3 -m venv venv
-source venv/bin/activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Verify installation
-python -c "import mlx; import mediapipe; print('Dependencies OK')"
-```
-
----
-
-## Usage
-
-### Run Full Pipeline
-
-```bash
-# Start Jupyter and run notebooks in order
-jupyter notebook notebooks/
-```
-
-### Individual Notebooks
-
-| Notebook | Purpose |
-|----------|---------|
-| `01_data_exploration.ipynb` | Download MaskedFace-Net, explore dataset statistics |
-| `02_baseline_facenet.ipynb` | Evaluate pretrained FaceNet on masked faces |
-| `03_mask_exclusion.ipynb` | Implement and evaluate mask region exclusion |
-| `04_analysis.ipynb` | Compare results, generate final report |
-| `05_landmark_demo.ipynb` | Interactive landmark detection demo |
-
-### Run Tests
-
-```bash
-source venv/bin/activate
-pytest tests/ -v
-```
-
----
-
-## Datasets
-
-### Primary: MaskedFace-Net
-
-- **Size:** 137,783 images (67,049 correctly masked + 66,734 incorrectly masked)
-- **Resolution:** 1024×1024
-- **Source:** [GitHub](https://github.com/cabani/MaskedFace-Net)
-- **License:** CC BY-NC-SA 4.0
-
-### Download Instructions
-
-```python
-from src.data.download import MaskedFaceNetDownloader
-
-downloader = MaskedFaceNetDownloader()
-print(downloader.get_download_instructions())
-```
-
-Or manually download from Google Drive:
-- **CMFD** (Correctly Masked): [Part 1](https://drive.google.com/file/d/17-FCstm8Fz3bDzFgTmOWHa_c39lTR_1P/view), [Part 2](https://drive.google.com/file/d/1XClQlP9_V6UmmnwTyzjF28vlrVHNSw2H/view)
-- **IMFD** (Incorrectly Masked): [Part 1](https://drive.google.com/file/d/1gjltyD_MnNWcnd56NnjUOizdi39CUEPF/view), [Part 2](https://drive.google.com/file/d/1qvbcuTHSLBTxQd3wXNAUIYVXBBJCa2WF/view)
-
----
-
-## Results
-
-### Evaluation Metrics
-
-| Metric | Description |
-|--------|-------------|
-| **Accuracy** | Verification accuracy at optimal threshold |
-| **ROC-AUC** | Area under ROC curve |
-| **FAR@1%FRR** | False Accept Rate at 1% False Reject Rate |
-
-### Results Table
-
-| Method | Accuracy | ROC-AUC | FAR@1%FRR |
-|--------|----------|---------|-----------|
-| Baseline (FaceNet) | *pending* | *pending* | *pending* |
-| Mask Exclusion | *pending* | *pending* | *pending* |
-| **Improvement** | *pending* | *pending* | *pending* |
-
-> Run notebooks to generate actual results. Results will be saved to `results/` directory.
-
----
-
-## Development Timeline
-
-| Phase | Tasks | Status |
-|-------|-------|--------|
-| **Setup** | Environment, dependencies, project structure | ✅ Complete |
-| **Data** | Download utilities, dataset loader | ✅ Complete |
-| **Model** | FaceNet implementation for MLX | ✅ Complete |
-| **Landmarks** | MediaPipe integration, mask inference | ✅ Complete |
-| **Evaluation** | Metrics, visualization utilities | ✅ Complete |
-| **Notebooks** | Pipeline notebooks (01-05) | ✅ Complete |
-| **Testing** | Unit tests for all modules | ✅ Complete |
-| **Execution** | Run pipeline, generate results | ⏳ Pending |
-| **Analysis** | Final report, conclusions | ⏳ Pending |
-
----
-
-## References
-
-1. **FaceNet:** Schroff et al., "FaceNet: A Unified Embedding for Face Recognition and Clustering" (CVPR 2015)
-2. **MaskedFace-Net:** Cabani et al., "MaskedFace-Net - A dataset of correctly/incorrectly masked face images" (2020)
-3. **MediaPipe Face Mesh:** https://developers.google.com/mediapipe/solutions/vision/face_mesh
-4. **Apple MLX:** https://ml-explore.github.io/mlx/
-
----
-
-## License
-
-CC BY-NC-SA 4.0 (for MaskedFace-Net dataset). Code is provided for educational purposes.
+- command and commit SHA,
+- dataset root and dataset preparation notes,
+- train/eval identity manifests,
+- sampled pair manifests,
+- detector failure counts by condition and split,
+- raw pair score CSV,
+- trained head checkpoint and standardizer,
+- aggregate ROC-AUC and calibration operating-point reports.

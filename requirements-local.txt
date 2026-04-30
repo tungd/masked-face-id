@@ -1,0 +1,12 @@
+# Local smoke checks and report utilities.
+#
+# Full GPU experiments are intended to run in Colab through the bridge/tunnel
+# workflow. Colab should continue using scripts/install_colab_deps.py instead.
+numpy>=1.26
+pandas>=2.2
+scikit-learn>=1.4
+pillow>=10
+matplotlib>=3.8
+seaborn>=0.13
+tqdm>=4.66
+gdown>=5.2
