@@ -12,10 +12,11 @@ import tarfile
 import zipfile
 from pathlib import Path
 from typing import Iterable
+from urllib.parse import unquote, urlparse
 from urllib.request import urlretrieve
 
 
-IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}
+IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".bmp", ".webp", ".jfif"}
 
 RMFRD_GDRIVE_URL = "https://drive.google.com/open?id=1UlOk6EtiaXTHylRUx2mySgvJX9ycoeBp"
 RMFRD_KAGGLE_SLUG = "muhammeddalkran/masked-facerecognition"
@@ -90,6 +91,11 @@ def download_url(url: str, out_path: Path) -> Path:
         return out_path
     urlretrieve(url, out_path)
     return out_path
+
+
+def archive_path_from_url(url: str, fallback: str, archives_dir: Path) -> Path:
+    name = Path(unquote(urlparse(url).path)).name
+    return archives_dir / (name or fallback)
 
 
 def download_kaggle(slug: str, out_dir: Path, unzip: bool) -> Path:
@@ -206,6 +212,9 @@ def maybe_download_dataset(args: argparse.Namespace, name: str, source: str) -> 
         if source == "gdrive":
             archive = download_gdown(args.rmfrd_url, args.root / "archives" / "rmfrd.zip")
             extract_archive(archive, out_dir / "extracted")
+        elif source == "url":
+            archive = download_url(args.rmfrd_url, archive_path_from_url(args.rmfrd_url, "rmfrd_archive", args.root / "archives"))
+            extract_archive(archive, out_dir / "extracted")
         elif source == "kaggle":
             download_kaggle(args.rmfrd_kaggle_slug, out_dir / "kaggle", unzip=True)
         elif source == "archive":
@@ -241,7 +250,7 @@ def maybe_download_dataset(args: argparse.Namespace, name: str, source: str) -> 
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", type=Path, default=Path("/content/datasets"))
-    parser.add_argument("--rmfrd-source", choices=["none", "gdrive", "kaggle", "archive"], default="none")
+    parser.add_argument("--rmfrd-source", choices=["none", "gdrive", "kaggle", "url", "archive"], default="none")
     parser.add_argument("--rmfrd-url", default=RMFRD_GDRIVE_URL)
     parser.add_argument("--rmfrd-kaggle-slug", default=RMFRD_KAGGLE_SLUG)
     parser.add_argument("--rmfrd-archive", type=Path, default=None)

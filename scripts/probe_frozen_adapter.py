@@ -24,7 +24,7 @@ from sklearn.metrics import accuracy_score, roc_auc_score
 from tqdm.auto import tqdm
 
 
-IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}
+IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".bmp", ".webp", ".jfif"}
 CASES = ["masked-masked", "masked-unmasked", "unmasked-unmasked"]
 
 
