@@ -50,26 +50,59 @@ def largest_face(faces):
     return max(faces, key=lambda face: float((face.bbox[2] - face.bbox[0]) * (face.bbox[3] - face.bbox[1])))
 
 
+def square_pad_resize(img: np.ndarray, size: int) -> np.ndarray:
+    height, width = img.shape[:2]
+    side = max(height, width)
+    top = (side - height) // 2
+    bottom = side - height - top
+    left = (side - width) // 2
+    right = side - width - left
+    padded = cv2.copyMakeBorder(img, top, bottom, left, right, cv2.BORDER_CONSTANT, value=(0, 0, 0))
+    return cv2.resize(padded, (size, size), interpolation=cv2.INTER_AREA)
+
+
+def direct_crop_embedding(app, img: np.ndarray) -> np.ndarray:
+    recognizer = app.models["recognition"]
+    input_size = int(recognizer.input_size[0])
+    crop = square_pad_resize(img, input_size)
+    return np.asarray(recognizer.get_feat(crop).flatten(), dtype=np.float32)
+
+
 def embed_records(records: Sequence[FaceRecord], model_name: str, det_size: int, providers: Sequence[str]) -> dict[Path, np.ndarray]:
     app = load_app(model_name, providers, det_size)
     embeddings: dict[Path, np.ndarray] = {}
     failures = 0
+    detector_embeddings = 0
+    direct_crop_embeddings = 0
     for record in tqdm(records, desc=f"Embedding {model_name}"):
         try:
             img = cv2.imread(str(record.path))
             if img is None:
-                face = None
+                vector = None
             else:
                 face = largest_face(app.get(img))
+                if face is None:
+                    vector = direct_crop_embedding(app, img)
+                    direct_crop_embeddings += 1
+                else:
+                    vector = np.asarray(face.normed_embedding, dtype=np.float32)
+                    detector_embeddings += 1
         except Exception:
-            face = None
-        if face is None:
+            vector = None
+        if vector is None:
             failures += 1
             continue
-        vector = np.asarray(face.normed_embedding, dtype=np.float32)
         norm = np.linalg.norm(vector)
         embeddings[record.path] = vector / norm if norm else vector
-    print({"model": model_name, "embedded": len(embeddings), "failures": failures})
+    print(
+        {
+            "model": model_name,
+            "embedded": len(embeddings),
+            "detector_embeddings": detector_embeddings,
+            "direct_crop_embeddings": direct_crop_embeddings,
+            "failures": failures,
+        }
+    )
     return embeddings
 
 
