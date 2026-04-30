@@ -85,13 +85,27 @@ normalized/lfw_smfrd_paired/
   unmasked/<identity>/*.jpg
 ```
 
+If Kaggle or the official SMFRD archives are not available in a clean runtime,
+use the reproducible LFW synthetic fallback. It downloads LFW through
+scikit-learn and creates a paired masked/unmasked root with deterministic
+lower-face synthetic masks:
+
+```bash
+python scripts/create_lfw_synthetic_mask_pairs.py \
+  --out-root /content/datasets/normalized/lfw_synthetic_mask_pairs \
+  --min-faces-per-person 2 \
+  --max-identities 1200 \
+  --max-images-per-identity 8 \
+  --seed 42
+```
+
 ## Run Synthetic-Train Real-Eval Probe
 
 ```bash
 python scripts/probe_pair_head_synthetic_train_real_eval.py \
-  --train-data-root /content/datasets/normalized/lfw_smfrd_paired \
+  --train-data-root /content/datasets/normalized/lfw_synthetic_mask_pairs \
   --eval-data-root /content/datasets/rmfrd/extracted/self-built-masked-face-recognition-dataset \
-  --out-dir /content/masked_face_final_runs/smfrd_train_rmfrd_eval_seed42 \
+  --out-dir /content/masked_face_final_runs/lfw_synth_train_rmfrd_eval_seed42 \
   --train-identities 1000 \
   --eval-identities 80 \
   --max-train-images-per-condition 4 \
@@ -108,6 +122,9 @@ python scripts/probe_pair_head_synthetic_train_real_eval.py \
 - The LFW-SMFRD Kaggle mirror contains simulated masked LFW images. The pair-head
   training root still needs corresponding unmasked images for the same
   identities.
+- `create_lfw_synthetic_mask_pairs.py` is a fallback, not the official SMFRD
+  release. Use it when the clean runtime has no Kaggle token and no mounted
+  official SMFRD archive.
 - If a downloaded root has both masked and unmasked condition folders already,
   pass that root directly as `--train-data-root`; no paired view is needed.
 - Keep the RMFRD real split as evaluation data so the extension does not become
