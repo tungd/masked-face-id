@@ -42,7 +42,8 @@ def write_conclusion(metrics: pd.DataFrame, out_dir: Path, train_root: Path, eva
     pair_uu = auc(MODEL_PAIR_HEAD_MASKED_ONLY, "unmasked-unmasked")
     gain = pair_mu - baseline_mu
     regression = baseline_uu - pair_uu
-    verdict = "PROMISING" if gain > 0 and regression <= 0.03 else "NOT YET PROMISING"
+    practical_gain_threshold = 0.01
+    verdict = "PROMISING" if gain >= practical_gain_threshold and regression <= 0.03 else "MARGINAL"
     text = f"""# Synthetic-Train Real-Eval Pair Head Conclusion
 
 Recommendation: {verdict}
@@ -55,6 +56,7 @@ Recommendation: {verdict}
 - Baseline unmasked-unmasked ROC-AUC: {baseline_uu:.4f}
 - Pair head masked-only unmasked-unmasked ROC-AUC: {pair_uu:.4f}
 - Pair head masked-only unmasked regression vs baseline: {regression:.4f}
+- Practical masked-unmasked gain threshold: {practical_gain_threshold:.4f}
 
 This extension trains the pair-level verifier head on a synthetic or larger
 masked/unmasked training root, then evaluates on a separate real-mask identity

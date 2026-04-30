@@ -108,6 +108,27 @@ therefore not "the pair head beats a dedicated model"; the useful claim is that
 a lightweight adapter recovers a meaningful portion of the masked-unmasked gap
 without replacing the deployed recognizer.
 
+### Larger Synthetic-Training Extension
+
+After the main result, we also ran a clean Colab extension that trains the pair
+head on a larger synthetic masked/unmasked LFW root and evaluates on real RMFRD
+identities. This used the reproducible LFW fallback because the clean runtime
+did not have Kaggle credentials or a mounted official SMFRD archive. The RMFRD
+evaluation identity set is separate from the two main RMFRD splits, so the
+extension is a transfer check rather than a row-by-row comparison to the main
+result.
+
+| Train data | Eval data | FaceNet masked-unmasked | Pair head masked-only | Gain | Unmasked-unmasked |
+|---|---|---:|---:|---:|---:|
+| LFW synthetic, 1,000 train identities | RMFRD, 80 eval identities | 0.7900 | 0.7914 | +0.0014 | 0.9570 |
+
+This is an important negative transfer result. The gain is technically
+positive, but far smaller than the RMFRD-trained pair head gains above. It
+suggests that simple synthetic lower-face masks alone do not transfer enough to
+replace target-domain pair supervision. The official SMFRD archive remains a
+reasonable future dataset upgrade, but this fallback run should not become the
+main project claim.
+
 ## Negative Probes
 
 Several alternatives were explored and rejected:
@@ -119,7 +140,8 @@ Several alternatives were explored and rejected:
 - test-time occlusion ensembles,
 - contrastive residual embedding adapter,
 - partial fine-tuning of the FaceNet tail,
-- scratch-trained periocular specialist using MediaPipe face landmarks.
+- scratch-trained periocular specialist using MediaPipe face landmarks,
+- larger LFW synthetic-mask training with real RMFRD evaluation.
 
 The periocular specialist is especially useful as a negative result. It trained
 successfully, but on seed 42 held-out identities it reached only `0.6358`
@@ -151,6 +173,8 @@ Primary scripts:
 
 - `scripts/probe_pair_verifier_head.py`
 - `scripts/probe_maskaware_baseline.py`
+- `scripts/probe_pair_head_synthetic_train_real_eval.py`
+- `scripts/create_lfw_synthetic_mask_pairs.py`
 - `scripts/install_colab_deps.py`
 
 Main artifacts:
@@ -159,10 +183,12 @@ Main artifacts:
 - `artifacts/rmfrd_pair_verifier_head_seed7/`
 - `artifacts/rmfrd_maskaware_baseline_seed42/`
 - `artifacts/rmfrd_maskaware_baseline_seed7/`
+- `artifacts/lfw_synthetic_train_rmfrd_eval_seed42/`
 
 Colab notebook:
 
 - `notebooks/masked_face_pair_head_final.ipynb`
+- `notebooks/smfrd_pair_head_extension.ipynb`
 
 Presentation:
 

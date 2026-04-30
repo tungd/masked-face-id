@@ -342,12 +342,31 @@
         </section>
 
         <section>
+          <h2>Synthetic-Train Extension</h2>
+          <div class="two-col">
+            <div class="panel">
+              <div class="metric">+0.0014</div>
+              <div class="metric-label">masked-unmasked ROC-AUC gain from LFW synthetic training</div>
+            </div>
+            <div>
+              <p>Train: 1,000 LFW synthetic masked/unmasked identities.</p>
+              <p>Evaluate: 80 real RMFRD masked/unmasked identities.</p>
+              <p>Result: 0.7900 FaceNet baseline to 0.7914 pair-head masked-only policy.</p>
+            </div>
+          </div>
+          <div class="callout">
+            <p>This is useful as a negative transfer result: simple synthetic masks did not replace target-domain pair supervision.</p>
+          </div>
+        </section>
+
+        <section>
           <h2>What Did Not Work</h2>
           <ul>
             <li>Fixed and learned score fusion were unstable.</li>
             <li>Embedding adapters produced small or inconsistent gains.</li>
             <li>Partial fine-tuning helped, but added more risk and still trailed.</li>
             <li>Scratch-trained periocular head was <span class="bad">weaker</span>: 0.6358 masked-unmasked ROC-AUC on seed 42.</li>
+            <li>LFW synthetic-mask training transferred only marginally: +0.0014 ROC-AUC on real RMFRD evaluation.</li>
           </ul>
         </section>
 
