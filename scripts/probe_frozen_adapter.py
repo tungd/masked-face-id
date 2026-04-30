@@ -49,6 +49,16 @@ class Pair:
 
 def normalize_condition(name: str) -> str | None:
     text = name.lower().replace("-", "_").replace(" ", "_")
+    explicit_unmasked_tokens = [
+        "unmasked",
+        "without_mask",
+        "without_masks",
+        "no_mask",
+        "no_masks",
+        "non_mask",
+        "non_masked",
+        "nomask",
+    ]
     masked_tokens = [
         "masked",
         "with_mask",
@@ -59,24 +69,18 @@ def normalize_condition(name: str) -> str | None:
         "afdb_masked_face_dataset",
         "masked_face_dataset",
     ]
-    unmasked_tokens = [
-        "unmasked",
-        "without_mask",
-        "without_masks",
-        "no_mask",
-        "no_masks",
-        "non_mask",
-        "non_masked",
-        "nomask",
+    generic_unmasked_tokens = [
         "common",
         "normal",
         "holistic",
         "afdb_face_dataset",
         "face_dataset",
     ]
+    if any(token in text for token in explicit_unmasked_tokens):
+        return "unmasked"
     if any(token in text for token in masked_tokens):
         return "masked"
-    if any(token in text for token in unmasked_tokens):
+    if any(token in text for token in generic_unmasked_tokens):
         return "unmasked"
     return None
 
