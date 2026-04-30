@@ -164,4 +164,6 @@ The highest-leverage next steps are:
 - compare cost and latency against the dedicated mask-aware ceiling,
 - add a cleaner run manifest for every Colab experiment.
 
-See [docs/reproducibility.md](docs/reproducibility.md) for the run checklist.
+See [docs/course-demo-finalization-spec.md](docs/course-demo-finalization-spec.md)
+for the course-demo plan and [docs/reproducibility.md](docs/reproducibility.md)
+for the run checklist.
