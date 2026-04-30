@@ -1,0 +1,22 @@
+{
+  "root": "/content/datasets/rmfrd/extracted/self-built-masked-face-recognition-dataset",
+  "condition_roots": {
+    "masked": [
+      "/content/datasets/rmfrd/extracted/self-built-masked-face-recognition-dataset/AFDB_masked_face_dataset"
+    ],
+    "unmasked": [
+      "/content/datasets/rmfrd/extracted/self-built-masked-face-recognition-dataset/AFDB_face_dataset"
+    ]
+  },
+  "identity_rows": 543,
+  "masked_identity_dirs": 525,
+  "unmasked_identity_dirs": 460,
+  "identities_with_both_dirs": 442,
+  "masked_nonempty_identities": 481,
+  "unmasked_nonempty_identities": 460,
+  "usable_paired_identities": 403,
+  "masked_images": 2203,
+  "unmasked_images": 90468,
+  "empty_masked_dirs": 44,
+  "empty_unmasked_dirs": 0
+}

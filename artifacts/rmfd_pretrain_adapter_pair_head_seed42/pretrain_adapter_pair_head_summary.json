@@ -1,0 +1,20 @@
+{
+  "data_root": "/content/datasets/rmfrd/extracted/self-built-masked-face-recognition-dataset",
+  "device": "cuda",
+  "pretrain_masked_images_requested": 2203,
+  "pretrain_masked_images_embedded": 1097,
+  "embedding_records_requested": 5403,
+  "embedding_records_embedded": 4197,
+  "embedding_failures": 1206,
+  "train_identities": 300,
+  "eval_identities": 100,
+  "train_images": 3478,
+  "eval_images": 1159,
+  "train_pairs_sampled": 30000,
+  "eval_pairs_sampled": 6000,
+  "raw_eval_pairs_scored": 3524,
+  "adapted_eval_pairs_scored": 3524,
+  "seed": 42,
+  "pretrain_epochs": 40,
+  "pair_head_epochs": 60
+}
