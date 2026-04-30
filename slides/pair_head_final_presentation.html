@@ -267,95 +267,97 @@
           <h2>Evaluation Setup</h2>
           <div class="three-col">
             <div class="panel">
-              <div class="metric">140</div>
+              <div class="metric">300</div>
               <div class="metric-label">training identities</div>
             </div>
             <div class="panel">
-              <div class="metric">80</div>
+              <div class="metric">100</div>
               <div class="metric-label">held-out evaluation identities</div>
             </div>
             <div class="panel">
               <div class="metric">3</div>
-              <div class="metric-label">pair cases</div>
+              <div class="metric-label">identity splits</div>
             </div>
           </div>
-          <p class="foot">Dataset: RMFRD identities with both masked and unmasked examples. Metric: ROC-AUC by pair case.</p>
+          <p class="foot">Dataset: RMFD/RMFRD paired identities. Seeds: 42, 7, 99. Metric: ROC-AUC by pair case.</p>
         </section>
 
         <section>
           <h2>Main Result: Masked-Unmasked ROC-AUC</h2>
           <div class="bar-chart">
             <div class="bar-row">
-              <div>Seed 42 FaceNet</div>
-              <div class="track"><div class="bar baseline" style="width: 74.53%"></div></div>
-              <div>0.7453</div>
+              <div>FaceNet mean</div>
+              <div class="track"><div class="bar baseline" style="width: 79.72%"></div></div>
+              <div>0.7972</div>
             </div>
             <div class="bar-row">
-              <div>Seed 42 Pair head</div>
-              <div class="track"><div class="bar pair" style="width: 80.57%"></div></div>
-              <div>0.8057</div>
+              <div>Pair head mean</div>
+              <div class="track"><div class="bar pair" style="width: 82.28%"></div></div>
+              <div>0.8228</div>
             </div>
             <div class="bar-row">
-              <div>Seed 42 Dedicated</div>
-              <div class="track"><div class="bar ceiling" style="width: 82.73%"></div></div>
-              <div>0.8273</div>
-            </div>
-            <div class="bar-row">
-              <div>Seed 7 FaceNet</div>
-              <div class="track"><div class="bar baseline" style="width: 79.65%"></div></div>
-              <div>0.7965</div>
-            </div>
-            <div class="bar-row">
-              <div>Seed 7 Pair head</div>
-              <div class="track"><div class="bar pair" style="width: 82.38%"></div></div>
-              <div>0.8238</div>
-            </div>
-            <div class="bar-row">
-              <div>Seed 7 Dedicated</div>
+              <div>Dedicated ceiling</div>
               <div class="track"><div class="bar ceiling" style="width: 87.24%"></div></div>
-              <div>0.8724</div>
+              <div>0.827-0.872</div>
             </div>
+          </div>
+          <div class="callout">
+            <p>Across three held-out splits, the pair head improves masked-unmasked ranking by +0.0256 ROC-AUC on average.</p>
           </div>
         </section>
 
         <section>
-          <h2>Detailed Results</h2>
+          <h2>Three-Seed Robustness</h2>
           <table class="results">
             <thead>
               <tr>
                 <th>Seed</th>
-                <th>Model</th>
-                <th>Masked-unmasked</th>
+                <th>FaceNet</th>
+                <th>Pair head</th>
                 <th>Gain</th>
-                <th>Unmasked-unmasked</th>
+                <th>Unmasked preserved</th>
               </tr>
             </thead>
             <tbody>
-              <tr><td>42</td><td>FaceNet</td><td>0.7453</td><td>-</td><td>0.9668</td></tr>
-              <tr><td>42</td><td>Pair head</td><td>0.8057</td><td class="good">+0.0604</td><td>0.9668</td></tr>
-              <tr><td>42</td><td>Dedicated ceiling</td><td>0.8273</td><td class="good">+0.0820</td><td>0.9582</td></tr>
-              <tr><td>7</td><td>FaceNet</td><td>0.7965</td><td>-</td><td>0.9671</td></tr>
-              <tr><td>7</td><td>Pair head</td><td>0.8238</td><td class="good">+0.0273</td><td>0.9671</td></tr>
-              <tr><td>7</td><td>Dedicated ceiling</td><td>0.8724</td><td class="good">+0.0759</td><td>0.9640</td></tr>
+              <tr><td>7</td><td>0.7945</td><td>0.8077</td><td class="good">+0.0132</td><td>0.9651</td></tr>
+              <tr><td>42</td><td>0.7999</td><td>0.8214</td><td class="good">+0.0215</td><td>0.9687</td></tr>
+              <tr><td>99</td><td>0.7973</td><td>0.8393</td><td class="good">+0.0420</td><td>0.9744</td></tr>
+              <tr><td>Mean</td><td>0.7972 +/- 0.0027</td><td>0.8228 +/- 0.0158</td><td class="good">+0.0256</td><td>0.9694 +/- 0.0047</td></tr>
             </tbody>
           </table>
         </section>
 
         <section>
-          <h2>Synthetic-Train Extension</h2>
-          <div class="two-col">
-            <div class="panel">
-              <div class="metric">+0.0014</div>
-              <div class="metric-label">masked-unmasked ROC-AUC gain from LFW synthetic training</div>
-            </div>
-            <div>
-              <p>Train: 1,000 LFW synthetic masked/unmasked identities.</p>
-              <p>Evaluate: 80 real RMFRD masked/unmasked identities.</p>
-              <p>Result: 0.7900 FaceNet baseline to 0.7914 pair-head masked-only policy.</p>
-            </div>
-          </div>
+          <h2>Why It Works</h2>
+          <table class="results">
+            <thead>
+              <tr>
+                <th>Feature set</th>
+                <th>Masked-unmasked ROC-AUC</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Full five-view features + dense interactions</td><td>0.8228 +/- 0.0158</td></tr>
+              <tr><td>Full-face dense interactions only</td><td>0.8185 +/- 0.0205</td></tr>
+              <tr><td>Dense interactions only, all views</td><td>0.8062 +/- 0.0161</td></tr>
+              <tr><td>Cosine scores only</td><td>0.7986 +/- 0.0021</td></tr>
+              <tr><td>Raw FaceNet baseline</td><td>0.7972 +/- 0.0027</td></tr>
+            </tbody>
+          </table>
           <div class="callout">
-            <p>This is useful as a negative transfer result: simple synthetic masks did not replace target-domain pair supervision.</p>
+            <p>The gain is not just re-thresholding cosine scores. Dense pair interactions carry the useful signal.</p>
+          </div>
+        </section>
+
+        <section>
+          <h2>Important Caveats</h2>
+          <ul>
+            <li>At calibrated FAR 0.05, full pair-head TAR did not beat raw FaceNet.</li>
+            <li>InsightFace `buffalo_l` was a negative control on this RMFD setup: 0.7474 raw masked-unmasked ROC-AUC, 0.7186 with a simple pair head.</li>
+            <li>The result is a ranking/verifier adaptation claim, not a finished threshold-calibrated deployment model.</li>
+          </ul>
+          <div class="callout">
+            <p>Main is frozen here. Bigger unfreezing, expanded synthetic benchmarks, and dataset upgrades move to follow-up branches.</p>
           </div>
         </section>
 
@@ -367,24 +369,26 @@
             <li>Partial fine-tuning helped, but added more risk and still trailed.</li>
             <li>Scratch-trained periocular head was <span class="bad">weaker</span>: 0.6358 masked-unmasked ROC-AUC on seed 42.</li>
             <li>LFW synthetic-mask training transferred only marginally: +0.0014 ROC-AUC on real RMFRD evaluation.</li>
+            <li>Residual adapter pretraining on all masked RMFD images hurt the pair-head result.</li>
           </ul>
         </section>
 
         <section>
-          <h2>Claim</h2>
+          <h2>Frozen Claim</h2>
           <div class="callout">
-            <p>A lightweight pair-level adapter can recover meaningful masked-unmasked verification performance for an existing unmasked recognizer.</p>
+            <p>A lightweight pair-level adapter can recover some masked-unmasked verification ranking performance for an existing FaceNet-style recognizer.</p>
           </div>
-          <p>It does not beat a purpose-built mask-aware recognizer. That model is the ceiling and comparison point.</p>
+          <p>It does not beat a purpose-built mask-aware recognizer, and threshold calibration remains open.</p>
         </section>
 
         <section>
           <h2>Takeaways</h2>
           <ul>
             <li>Best final direction: frozen FaceNet + pair-head verifier.</li>
-            <li>Main gain: +0.0604 and +0.0273 masked-unmasked ROC-AUC across two held-out splits.</li>
+            <li>Main gain: +0.0256 mean masked-unmasked ROC-AUC across three held-out splits.</li>
             <li>Unmasked path is preserved exactly by bypassing the head.</li>
-            <li>Dedicated mask-aware models remain stronger, as expected.</li>
+            <li>Dense pair interactions explain the win; cosine scores alone do not.</li>
+            <li>Future exploration continues off main.</li>
           </ul>
           <p class="foot">Code, notebook, report, and artifacts are checked into the repository.</p>
         </section>

@@ -220,6 +220,21 @@ ROC-AUC does not automatically produce a better fixed-FAR operating point. It
 should be framed as a lightweight adaptation strategy rather than a
 state-of-the-art recognizer.
 
+## Frozen Scope
+
+This report freezes the main branch at the validated pair-head direction:
+
+- frozen FaceNet/InceptionResnetV1 embeddings,
+- five occlusion-aware views,
+- pair-level MLP verifier,
+- masked-only inference policy,
+- comparison against dedicated mask-aware recognizers as the ceiling.
+
+Further exploration should continue on separate branches. The next reasonable
+branches are deeper FaceNet unfreezing, expanded synthetic-mask benchmarks,
+larger paired datasets such as an official SMFRD setup, and better threshold
+calibration. Those are future work, not part of the frozen mainline claim.
+
 ## Reproducibility
 
 Primary scripts:
