@@ -1,0 +1,2 @@
+seed,train_identities,eval_identities,train_images,eval_images,embedded_images,embedding_failures
+42,300,100,3478,1159,4637,0

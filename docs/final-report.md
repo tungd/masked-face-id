@@ -9,12 +9,14 @@ freezes FaceNet/InceptionResnetV1 and trains a small pair-level verifier head
 over multi-view embedding features. The dedicated mask-aware recognizer is used
 as a ceiling, not as the method we claim to beat.
 
-On held-out RMFRD identity splits, the pair-head improves masked-unmasked
-ROC-AUC from `0.7453` to `0.8057` on seed 42 and from `0.7965` to `0.8238` on
-seed 7, while preserving unmasked-unmasked ROC-AUC by bypassing those pairs to
-the original FaceNet verifier. Dedicated MaskInv/ElasticFace mask-aware models
-remain stronger, reaching `0.8273` and `0.8724` masked-unmasked ROC-AUC on the
-same two splits.
+On held-out RMFD/RMFRD paired identity splits, the pair-head improves
+masked-unmasked ROC-AUC from `0.7972 +/- 0.0027` to `0.8228 +/- 0.0158` across
+three seeds. The masked-only bypass preserves unmasked-unmasked ROC-AUC at
+`0.9694 +/- 0.0047`. Feature ablations show that dense pair interactions drive
+the gain; cosine scores alone are close to the baseline. A stronger public
+ArcFace/InsightFace comparison was also tested and was a useful negative
+control: direct-crop `buffalo_l` reached only `0.7474` masked-unmasked ROC-AUC
+on the seed-42 split, and its simple pair head hurt performance.
 
 ## Problem
 
@@ -62,12 +64,16 @@ recognizer where masks are not involved.
 Dataset: RMFRD from the Real-World Masked Face Dataset family. The probe uses
 identities that have both masked and unmasked examples.
 
-Splits:
+The current paired subset scan found `403` usable identities with both masked
+and unmasked images. The main validation uses three disjoint identity splits:
 
-- train identities: `140`
-- evaluation identities: `80`
+- seeds: `42`, `7`, `99`
+- train identities per seed: `300`
+- evaluation identities per seed: `100`
 - max images per condition: `8`
-- identity sets are disjoint between training and evaluation.
+- train pairs per case: `10000`
+- evaluation pairs per case: `2000`
+- calibration split: `20%` of training pairs for threshold selection.
 
 Pair cases:
 
@@ -75,38 +81,82 @@ Pair cases:
 - `masked-unmasked`,
 - `unmasked-unmasked`.
 
-Metric: ROC-AUC by pair case. Accuracy, threshold, FAR, and FRR are also saved
-in artifacts, but ROC-AUC is the main comparison metric because it separates
-ranking quality from threshold selection.
+Metric: ROC-AUC by pair case. Accuracy, threshold, FAR, FRR, and TAR are also
+saved in artifacts, but ROC-AUC is the main comparison metric because it
+separates ranking quality from threshold selection. Threshold analysis uses
+calibration pairs only for threshold choice and applies those thresholds to
+held-out eval pairs.
 
 ## Results
 
-### Pair-Head Adaptation
+### Pair-Head Robustness
 
-| Seed | Model | Masked-unmasked ROC-AUC | Gain vs FaceNet | Unmasked-unmasked ROC-AUC |
-|---:|---|---:|---:|---:|
-| 42 | FaceNet baseline | 0.7453 | - | 0.9668 |
-| 42 | Pair head, masked-only | 0.8057 | +0.0604 | 0.9668 |
-| 7 | FaceNet baseline | 0.7965 | - | 0.9671 |
-| 7 | Pair head, masked-only | 0.8238 | +0.0273 | 0.9671 |
+| Seed | FaceNet masked-unmasked | Pair head masked-only | Gain | Unmasked-unmasked preserved |
+|---:|---:|---:|---:|---:|
+| 7 | 0.7945 | 0.8077 | +0.0132 | 0.9651 |
+| 42 | 0.7999 | 0.8214 | +0.0215 | 0.9687 |
+| 99 | 0.7973 | 0.8393 | +0.0420 | 0.9744 |
+| Mean +/- std | 0.7972 +/- 0.0027 | 0.8228 +/- 0.0158 | +0.0256 | 0.9694 +/- 0.0047 |
 
-The pair-head signal survives a second identity split. The gain is larger on
-seed 42 than seed 7, but both are positive on the main masked-unmasked case.
-The masked-only bypass keeps unmasked-unmasked ROC-AUC unchanged.
+The harder validation keeps the original conclusion but makes it more modest:
+the gain is consistent across three held-out identity splits, but it is not a
+large margin. The masked-only bypass is still important because the all-cases
+head slightly degrades unmasked-unmasked ROC-AUC (`0.9586 +/- 0.0049`), while
+the bypass preserves the raw FaceNet value.
+
+### Feature Ablation
+
+| Feature set | Masked-unmasked ROC-AUC mean +/- std |
+|---|---:|
+| Full five-view features + dense interactions | 0.8228 +/- 0.0158 |
+| Full-face dense interactions only | 0.8185 +/- 0.0205 |
+| Dense interactions only, all views | 0.8062 +/- 0.0161 |
+| Cosine scores only | 0.7986 +/- 0.0021 |
+| Cosine scores + score statistics | 0.7969 +/- 0.0045 |
+| Raw FaceNet baseline | 0.7972 +/- 0.0027 |
+
+This ablation says the pair head is not winning because of a simple learned
+threshold over cosine scores. The useful signal is mostly in the dense pair
+interactions: absolute embedding differences and elementwise products.
+
+### Threshold Calibration
+
+| Model | Eval FAR mean | Eval TAR mean | Eval accuracy mean |
+|---|---:|---:|---:|
+| FaceNet baseline | 0.0481 | 0.3866 | 0.6638 |
+| Pair head, cosine-only | 0.0495 | 0.3999 | 0.6697 |
+| Pair head, full features | 0.0502 | 0.3769 | 0.6577 |
+
+Thresholds were chosen on calibration pairs for nominal FAR `0.05` and then
+applied to held-out eval pairs. The full pair head improves ranking ROC-AUC, but
+it does not improve this fixed operating point. This is a useful limitation for
+the final argument: the method is defensible as a ranking/verifier adaptation,
+but deployment threshold calibration would need more work.
+
+### Stronger Public Recognizer Check
+
+| Model | Masked-masked ROC-AUC | Masked-unmasked ROC-AUC | Unmasked-unmasked ROC-AUC |
+|---|---:|---:|---:|
+| InsightFace `buffalo_l` raw cosine | 0.7995 | 0.7474 | 0.9383 |
+| InsightFace `buffalo_l` pair head | 0.7766 | 0.7186 | 0.9383 |
+| FaceNet raw cosine, same seed | 0.8578 | 0.7999 | 0.9687 |
+| FaceNet pair head, same seed | 0.8910 | 0.8214 | 0.9687 |
+
+This comparison did not disprove the FaceNet pair-head result. It showed an
+integration caveat: InsightFace's detector found only `21` of `4637` selected
+RMFD crops, so the probe had to fall back to direct square-padded ArcFace crops
+for the rest. Under that setup, `buffalo_l` is weaker than the FaceNet/MTCNN
+pipeline on this dataset, and a simple full-embedding pair head is harmful.
 
 ### Dedicated Mask-Aware Ceiling
 
-| Seed | Best dedicated model | Masked-unmasked ROC-AUC | Gain vs FaceNet | Gap vs pair head |
-|---:|---|---:|---:|---:|
-| 42 | MaskInv-LG | 0.8273 | +0.0820 | +0.0216 |
-| 7 | ElasticFace-Arc-Aug | 0.8724 | +0.0759 | +0.0486 |
-
-The dedicated mask-aware recognizer is the expected ceiling. It is trained for
-masked face recognition and uses an IResNet-100-style backbone, so it is not a
-fair deployment-cost match for the small pair-head adapter. The useful claim is
-therefore not "the pair head beats a dedicated model"; the useful claim is that
-a lightweight adapter recovers a meaningful portion of the masked-unmasked gap
-without replacing the deployed recognizer.
+Earlier ceiling runs with dedicated MaskInv/ElasticFace-style models remain
+useful context, but they are not the deployment-cost comparison we claim to
+beat. On the earlier two-seed protocol, the best dedicated models reached
+`0.8273` and `0.8724` masked-unmasked ROC-AUC. They are trained for masked face
+recognition and use stronger IResNet-style backbones, so the right framing is:
+the pair head recovers part of the masked-unmasked gap without replacing the
+deployed recognizer.
 
 ### Larger Synthetic-Training Extension
 
@@ -141,7 +191,9 @@ Several alternatives were explored and rejected:
 - contrastive residual embedding adapter,
 - partial fine-tuning of the FaceNet tail,
 - scratch-trained periocular specialist using MediaPipe face landmarks,
-- larger LFW synthetic-mask training with real RMFRD evaluation.
+- larger LFW synthetic-mask training with real RMFRD evaluation,
+- residual adapter pretraining on all available masked RMFD images,
+- InsightFace/ArcFace full-embedding pair head.
 
 The periocular specialist is especially useful as a negative result. It trained
 successfully, but on seed 42 held-out identities it reached only `0.6358`
@@ -163,22 +215,32 @@ recognizer retraining:
 - it preserves the legacy unmasked path.
 
 The main limitation is that the pair head still learns from pair labels on the
-target dataset distribution. It also trails the dedicated mask-aware model by
-`0.0216` to `0.0486` ROC-AUC on masked-unmasked pairs, so it should be framed as
-a lightweight adaptation strategy rather than a state-of-the-art recognizer.
+target dataset distribution. The calibration analysis also shows that better
+ROC-AUC does not automatically produce a better fixed-FAR operating point. It
+should be framed as a lightweight adaptation strategy rather than a
+state-of-the-art recognizer.
 
 ## Reproducibility
 
 Primary scripts:
 
 - `scripts/probe_pair_verifier_head.py`
+- `scripts/probe_pair_head_robustness.py`
+- `scripts/probe_insightface_pair_head.py`
 - `scripts/probe_maskaware_baseline.py`
+- `scripts/probe_rmfd_pretrain_adapter_pair_head.py`
+- `scripts/scan_rmfd_paired_identities.py`
 - `scripts/probe_pair_head_synthetic_train_real_eval.py`
 - `scripts/create_lfw_synthetic_mask_pairs.py`
 - `scripts/install_colab_deps.py`
 
 Main artifacts:
 
+- `artifacts/rmfd_pair_head_robustness_seed42_7_99/`
+- `artifacts/insightface_pair_head_seed42/`
+- `artifacts/rmfd_pair_verifier_head_full_seed42/`
+- `artifacts/rmfd_pretrain_adapter_pair_head_seed42/`
+- `artifacts/rmfd_paired_identity_scan/`
 - `artifacts/rmfrd_pair_verifier_head_probe/`
 - `artifacts/rmfrd_pair_verifier_head_seed7/`
 - `artifacts/rmfrd_maskaware_baseline_seed42/`

@@ -1,0 +1,4 @@
+seed,train_identities,eval_identities,train_images,eval_images,embedded_images,embedding_failures
+42,300,100,3478,1159,3842,795
+7,300,100,3453,1187,3847,793
+99,300,100,3473,1167,3862,778

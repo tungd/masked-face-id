@@ -1,0 +1,23 @@
+{
+  "device": "cuda",
+  "model_name": "buffalo_l",
+  "seeds": [
+    42
+  ],
+  "raw_mu_mean": 0.747392,
+  "pair_mu_mean": 0.718634,
+  "pair_mu_gain": -0.02875799999999995,
+  "runs": [
+    {
+      "seed": 42,
+      "train_identities": 300,
+      "eval_identities": 100,
+      "train_images": 3478,
+      "eval_images": 1159,
+      "embedded_images": 4637,
+      "embedding_failures": 0
+    }
+  ],
+  "detector_embeddings": 21,
+  "direct_crop_embeddings": 4616
+}

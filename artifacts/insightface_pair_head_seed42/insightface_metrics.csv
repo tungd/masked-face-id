@@ -1,0 +1,10 @@
+model,case,pairs,roc_auc,accuracy,threshold,far,frr
+insightface_arcface_pair_head_all_cases,masked-masked,2000,0.776625,0.734,0.009954165667295456,0.189,0.343
+insightface_arcface_pair_head_masked_only,masked-masked,2000,0.776625,0.734,0.009954165667295456,0.189,0.343
+insightface_arcface_raw,masked-masked,2000,0.799491,0.741,0.24212995171546936,0.124,0.394
+insightface_arcface_pair_head_all_cases,masked-unmasked,2000,0.718634,0.6695,0.7314934730529785,0.151,0.51
+insightface_arcface_pair_head_masked_only,masked-unmasked,2000,0.718634,0.6695,0.7314934730529785,0.151,0.51
+insightface_arcface_raw,masked-unmasked,2000,0.747392,0.705,0.08092115819454193,0.143,0.447
+insightface_arcface_pair_head_all_cases,unmasked-unmasked,2000,0.9187835,0.8545,0.11010579019784927,0.105,0.186
+insightface_arcface_pair_head_masked_only,unmasked-unmasked,2000,0.938309,0.892,0.15206469595432281,0.066,0.15
+insightface_arcface_raw,unmasked-unmasked,2000,0.938309,0.892,0.15206469595432281,0.066,0.15

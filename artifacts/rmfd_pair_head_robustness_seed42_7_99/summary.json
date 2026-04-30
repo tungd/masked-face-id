@@ -1,0 +1,42 @@
+{
+  "device": "cuda",
+  "seeds": [
+    42,
+    7,
+    99
+  ],
+  "baseline_mu_mean": 0.7972101059491425,
+  "pair_head_mu_mean": 0.822783197469092,
+  "pair_head_mu_gain": 0.025573091519949465,
+  "best_ablation_model": "pair_head_full_all_features_all_cases",
+  "best_ablation_mu_mean": 0.822783197469092,
+  "runs": [
+    {
+      "seed": 42,
+      "train_identities": 300,
+      "eval_identities": 100,
+      "train_images": 3478,
+      "eval_images": 1159,
+      "embedded_images": 3842,
+      "embedding_failures": 795
+    },
+    {
+      "seed": 7,
+      "train_identities": 300,
+      "eval_identities": 100,
+      "train_images": 3453,
+      "eval_images": 1187,
+      "embedded_images": 3847,
+      "embedding_failures": 793
+    },
+    {
+      "seed": 99,
+      "train_identities": 300,
+      "eval_identities": 100,
+      "train_images": 3473,
+      "eval_images": 1167,
+      "embedded_images": 3862,
+      "embedding_failures": 778
+    }
+  ]
+}

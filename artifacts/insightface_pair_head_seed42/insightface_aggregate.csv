@@ -1,0 +1,10 @@
+model,case,seeds,roc_auc_mean,roc_auc_std,roc_auc_min,roc_auc_max
+insightface_arcface_raw,masked-masked,1,0.799491,0.0,0.799491,0.799491
+insightface_arcface_pair_head_all_cases,masked-masked,1,0.776625,0.0,0.776625,0.776625
+insightface_arcface_pair_head_masked_only,masked-masked,1,0.776625,0.0,0.776625,0.776625
+insightface_arcface_raw,masked-unmasked,1,0.747392,0.0,0.747392,0.747392
+insightface_arcface_pair_head_all_cases,masked-unmasked,1,0.718634,0.0,0.718634,0.718634
+insightface_arcface_pair_head_masked_only,masked-unmasked,1,0.718634,0.0,0.718634,0.718634
+insightface_arcface_pair_head_masked_only,unmasked-unmasked,1,0.938309,0.0,0.938309,0.938309
+insightface_arcface_raw,unmasked-unmasked,1,0.938309,0.0,0.938309,0.938309
+insightface_arcface_pair_head_all_cases,unmasked-unmasked,1,0.9187835,0.0,0.9187835,0.9187835
