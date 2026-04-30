@@ -13,7 +13,7 @@ import zipfile
 from pathlib import Path
 from typing import Iterable
 from urllib.parse import unquote, urlparse
-from urllib.request import urlretrieve
+from urllib.request import Request, urlopen
 
 
 IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".bmp", ".webp", ".jfif"}
@@ -87,9 +87,13 @@ def download_gdown(url: str, out_path: Path) -> Path:
 
 def download_url(url: str, out_path: Path) -> Path:
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    if out_path.exists():
+    if out_path.exists() and out_path.stat().st_size > 0:
         return out_path
-    urlretrieve(url, out_path)
+    tmp_path = out_path.with_suffix(out_path.suffix + ".part")
+    request = Request(url, headers={"User-Agent": "Mozilla/5.0 masked-face-id dataset setup"})
+    with urlopen(request) as response, tmp_path.open("wb") as handle:
+        shutil.copyfileobj(response, handle)
+    tmp_path.replace(out_path)
     return out_path
 
 
