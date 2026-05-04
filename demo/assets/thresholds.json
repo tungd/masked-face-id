@@ -1,0 +1,12 @@
+{
+  "baseline_full": {
+    "masked-masked": 0.505,
+    "masked-unmasked": 0.476,
+    "unmasked-unmasked": 0.482
+  },
+  "pair_head_full_all_features_masked_only": {
+    "masked-masked": 0.998,
+    "masked-unmasked": 0.999,
+    "unmasked-unmasked": 0.482
+  }
+}

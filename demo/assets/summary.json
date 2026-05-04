@@ -1,0 +1,34 @@
+{
+  "bundle_type": "checked-in anonymized offline demo bundle",
+  "source_scores": "representative values from final artifacts; rebuild with scripts/export_demo_bundle.py for dataset-selected pairs",
+  "seed": 42,
+  "target_far": 0.05,
+  "examples": 5,
+  "baseline_model": "baseline_full",
+  "pair_model": "pair_head_full_all_features_masked_only",
+  "ranking_result": {
+    "baseline_masked_unmasked_roc_auc_mean": 0.7972,
+    "pair_head_masked_unmasked_roc_auc_mean": 0.8228,
+    "mean_gain": 0.0256,
+    "unmasked_unmasked_preserved_roc_auc_mean": 0.9694
+  },
+  "calibration_far05": {
+    "baseline_full": {
+      "far_mean": 0.0481,
+      "tar_mean": 0.3866,
+      "accuracy_mean": 0.6638
+    },
+    "pair_head_full_all_features_masked_only": {
+      "far_mean": 0.0502,
+      "tar_mean": 0.3769,
+      "accuracy_mean": 0.6577
+    }
+  },
+  "selection_roles": [
+    "masked_unmasked_recovered",
+    "masked_masked_match",
+    "unmasked_bypass",
+    "impostor_rejected",
+    "hard_failure"
+  ]
+}

@@ -1,0 +1,592 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Masked Face Verification Demo</title>
+    <style>
+      :root {
+        --bg: #f5f7fb;
+        --panel: #ffffff;
+        --ink: #17202a;
+        --muted: #5c6a7a;
+        --line: #d8dee8;
+        --blue: #1f6fb2;
+        --teal: #117e75;
+        --green: #247a4d;
+        --amber: #a86500;
+        --red: #b33a3a;
+        --slate: #2d3748;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      button,
+      input,
+      select {
+        font: inherit;
+      }
+
+      .app-shell {
+        display: grid;
+        grid-template-columns: 320px minmax(0, 1fr);
+        min-height: 100vh;
+      }
+
+      .sidebar {
+        border-right: 1px solid var(--line);
+        background: #eef2f7;
+        padding: 22px 18px;
+      }
+
+      .brand h1 {
+        margin: 0;
+        font-size: 1.22rem;
+        line-height: 1.2;
+      }
+
+      .brand p {
+        margin: 8px 0 0;
+        color: var(--muted);
+        font-size: 0.88rem;
+        line-height: 1.45;
+      }
+
+      .pair-list {
+        display: grid;
+        gap: 10px;
+        margin-top: 22px;
+      }
+
+      .pair-option {
+        width: 100%;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        color: var(--ink);
+        cursor: pointer;
+        padding: 12px;
+        text-align: left;
+        transition: border-color 120ms ease, box-shadow 120ms ease, transform 120ms ease;
+      }
+
+      .pair-option:hover,
+      .pair-option:focus-visible {
+        border-color: var(--blue);
+        box-shadow: 0 0 0 3px rgba(31, 111, 178, 0.16);
+        outline: none;
+      }
+
+      .pair-option.active {
+        border-color: var(--blue);
+        box-shadow: inset 4px 0 0 var(--blue);
+      }
+
+      .pair-title {
+        display: block;
+        font-weight: 720;
+        font-size: 0.94rem;
+        line-height: 1.25;
+      }
+
+      .pair-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 9px;
+      }
+
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        min-height: 24px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: #f8fafc;
+        color: var(--muted);
+        padding: 3px 9px;
+        font-size: 0.76rem;
+        line-height: 1.1;
+        white-space: nowrap;
+      }
+
+      .workspace {
+        min-width: 0;
+        padding: 24px;
+      }
+
+      .topbar {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 20px;
+        align-items: start;
+        margin-bottom: 18px;
+      }
+
+      .topbar h2 {
+        margin: 0;
+        font-size: 1.34rem;
+        line-height: 1.2;
+      }
+
+      .topbar p {
+        margin: 8px 0 0;
+        color: var(--muted);
+        line-height: 1.45;
+        max-width: 820px;
+      }
+
+      .decision {
+        min-width: 190px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 14px 16px;
+      }
+
+      .decision-label {
+        color: var(--muted);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+      }
+
+      .decision-value {
+        display: block;
+        margin-top: 4px;
+        font-size: 1.48rem;
+        font-weight: 800;
+        line-height: 1.1;
+      }
+
+      .decision-value.match {
+        color: var(--green);
+      }
+
+      .decision-value.non-match {
+        color: var(--red);
+      }
+
+      .verifier-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.25fr) minmax(300px, 0.75fr);
+        gap: 18px;
+      }
+
+      .section {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 16px;
+      }
+
+      .section h3 {
+        margin: 0 0 13px;
+        font-size: 1rem;
+      }
+
+      .image-pair {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      figure {
+        margin: 0;
+      }
+
+      .face-frame {
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #e9edf3;
+        aspect-ratio: 1 / 1;
+      }
+
+      .face-frame img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      figcaption {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        margin-top: 8px;
+        color: var(--muted);
+        font-size: 0.82rem;
+      }
+
+      .metadata-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      .datum {
+        border-bottom: 1px solid var(--line);
+        padding: 9px 0;
+      }
+
+      .datum span {
+        display: block;
+        color: var(--muted);
+        font-size: 0.76rem;
+      }
+
+      .datum strong {
+        display: block;
+        margin-top: 3px;
+        font-size: 0.94rem;
+        line-height: 1.25;
+      }
+
+      .explain {
+        margin: 14px 0 0;
+        border-left: 4px solid var(--teal);
+        background: #ecf8f6;
+        border-radius: 6px;
+        padding: 11px 12px;
+        color: #1c4d49;
+        font-size: 0.88rem;
+        line-height: 1.45;
+      }
+
+      .scores {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 18px;
+      }
+
+      .score {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 14px;
+        min-width: 0;
+      }
+
+      .score-label {
+        color: var(--muted);
+        font-size: 0.78rem;
+        line-height: 1.25;
+      }
+
+      .score-value {
+        display: block;
+        margin-top: 6px;
+        color: var(--slate);
+        font-size: 1.38rem;
+        font-weight: 800;
+      }
+
+      .score small {
+        color: var(--muted);
+        display: block;
+        margin-top: 3px;
+      }
+
+      .meter {
+        position: relative;
+        overflow: hidden;
+        height: 10px;
+        border-radius: 999px;
+        background: #e7ebf1;
+        margin-top: 12px;
+      }
+
+      .meter span {
+        display: block;
+        height: 100%;
+        width: 0;
+        border-radius: inherit;
+        background: var(--blue);
+      }
+
+      .score.final .meter span {
+        background: var(--teal);
+      }
+
+      .score.warning .meter span {
+        background: var(--amber);
+      }
+
+      .views {
+        margin-top: 18px;
+      }
+
+      .view-grid {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(140px, 1fr));
+        gap: 12px;
+      }
+
+      .view-item {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        overflow: hidden;
+        background: var(--panel);
+      }
+
+      .view-title {
+        padding: 9px 10px;
+        border-bottom: 1px solid var(--line);
+        color: var(--slate);
+        font-size: 0.82rem;
+        font-weight: 720;
+      }
+
+      .view-images {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1px;
+        background: var(--line);
+      }
+
+      .view-images img {
+        display: block;
+        width: 100%;
+        aspect-ratio: 1 / 1;
+        object-fit: cover;
+        background: #e9edf3;
+      }
+
+      .empty {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 20px;
+      }
+
+      @media (max-width: 1080px) {
+        .app-shell {
+          grid-template-columns: 1fr;
+        }
+
+        .sidebar {
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+        }
+
+        .pair-list {
+          grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        }
+
+        .verifier-grid,
+        .topbar {
+          grid-template-columns: 1fr;
+        }
+
+        .scores {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 680px) {
+        .workspace,
+        .sidebar {
+          padding: 16px;
+        }
+
+        .image-pair,
+        .metadata-grid,
+        .scores,
+        .view-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <h1>Masked Face Verification Demo</h1>
+          <p>Curated offline pairs with raw FaceNet, adapted pair-head, and final policy scores.</p>
+        </div>
+        <div class="pair-list" id="pairList" aria-label="Curated example pairs"></div>
+      </aside>
+
+      <section class="workspace">
+        <div id="app"></div>
+      </section>
+    </main>
+
+    <script src="assets/demo_data.js"></script>
+    <script>
+      const data = window.DEMO_DATA || { examples: [], summary: {}, thresholds: {} };
+      const viewLabels = {
+        full: "Full face",
+        lower_blackout: "Lower-face blackout",
+        lower_blur: "Lower-face blur",
+        upper_only: "Upper-only",
+        eye_band: "Eye-band"
+      };
+      let activeIndex = 0;
+
+      function asset(path) {
+        return `assets/${path}`;
+      }
+
+      function fmt(value, digits = 3) {
+        const number = Number(value);
+        return Number.isFinite(number) ? number.toFixed(digits) : "n/a";
+      }
+
+      function pct(value) {
+        const number = Number(value);
+        if (!Number.isFinite(number)) return 0;
+        return Math.max(0, Math.min(100, number * 100));
+      }
+
+      function titleCase(text) {
+        return String(text || "")
+          .replace(/[-_]/g, " ")
+          .replace(/\b\w/g, char => char.toUpperCase());
+      }
+
+      function renderPairList() {
+        const list = document.getElementById("pairList");
+        list.innerHTML = "";
+        data.examples.forEach((example, index) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = `pair-option${index === activeIndex ? " active" : ""}`;
+          button.setAttribute("aria-pressed", index === activeIndex ? "true" : "false");
+          button.innerHTML = `
+            <span class="pair-title">${example.title}</span>
+            <span class="pair-meta">
+              <span class="chip">${example.case}</span>
+              <span class="chip">${example.ground_truth}</span>
+              <span class="chip">${example.predicted_decision}</span>
+            </span>
+          `;
+          button.addEventListener("click", () => {
+            activeIndex = index;
+            render();
+          });
+          list.appendChild(button);
+        });
+      }
+
+      function scoreBlock(label, value, threshold, decision, className = "") {
+        return `
+          <div class="score ${className}">
+            <span class="score-label">${label}</span>
+            <strong class="score-value">${fmt(value)}</strong>
+            <small>threshold ${fmt(threshold)} · ${decision}</small>
+            <div class="meter" aria-hidden="true"><span style="width:${pct(value)}%"></span></div>
+          </div>
+        `;
+      }
+
+      function renderViews(example) {
+        return Object.keys(viewLabels)
+          .map(view => `
+            <div class="view-item">
+              <div class="view-title">${viewLabels[view]}</div>
+              <div class="view-images">
+                <img src="${asset(example.views_left[view])}" alt="Left ${viewLabels[view]} view">
+                <img src="${asset(example.views_right[view])}" alt="Right ${viewLabels[view]} view">
+              </div>
+            </div>
+          `)
+          .join("");
+      }
+
+      function renderApp() {
+        const app = document.getElementById("app");
+        if (!data.examples.length) {
+          app.innerHTML = `
+            <div class="empty">
+              <strong>No demo examples found.</strong>
+              <p>Run scripts/export_demo_bundle.py or restore demo/assets/demo_data.js.</p>
+            </div>
+          `;
+          return;
+        }
+
+        const example = data.examples[activeIndex];
+        const isCorrect = example.predicted_decision === (example.ground_truth_label === 1 ? "match" : "non-match");
+        const pairHeadThreshold = example.case === "unmasked-unmasked" ? example.baseline_threshold : example.pair_head_threshold;
+        app.innerHTML = `
+          <header class="topbar">
+            <div>
+              <h2>${example.title}</h2>
+              <p>${example.notes}</p>
+            </div>
+            <div class="decision">
+              <span class="decision-label">Final policy</span>
+              <strong class="decision-value ${example.predicted_decision}">${titleCase(example.predicted_decision)}</strong>
+              <span class="chip">${isCorrect ? "correct" : "shown as limitation"}</span>
+            </div>
+          </header>
+
+          <div class="verifier-grid">
+            <section class="section">
+              <h3>Pair Images</h3>
+              <div class="image-pair">
+                <figure>
+                  <div class="face-frame"><img src="${asset(example.left_image)}" alt="Left face image"></div>
+                  <figcaption><span>Left</span><span>${titleCase(example.left_condition || "unknown")}</span></figcaption>
+                </figure>
+                <figure>
+                  <div class="face-frame"><img src="${asset(example.right_image)}" alt="Right face image"></div>
+                  <figcaption><span>Right</span><span>${titleCase(example.right_condition || "unknown")}</span></figcaption>
+                </figure>
+              </div>
+            </section>
+
+            <section class="section">
+              <h3>Pair Metadata</h3>
+              <div class="metadata-grid">
+                <div class="datum"><span>Pair case</span><strong>${example.case}</strong></div>
+                <div class="datum"><span>Ground truth</span><strong>${titleCase(example.ground_truth)}</strong></div>
+                <div class="datum"><span>Predicted decision</span><strong>${titleCase(example.predicted_decision)}</strong></div>
+                <div class="datum"><span>Final model path</span><strong>${example.final_model}</strong></div>
+                <div class="datum"><span>FAR target</span><strong>${fmt(example.target_far, 2)}</strong></div>
+                <div class="datum"><span>Selected threshold</span><strong>${fmt(example.selected_threshold)}</strong></div>
+              </div>
+              <p class="explain">FAR controls false accepts from impostor pairs. TAR measures genuine accepts at the selected threshold. This demo uses the calibration-selected FAR target shown above.</p>
+            </section>
+          </div>
+
+          <section class="scores" aria-label="Verification scores">
+            ${scoreBlock("Raw FaceNet cosine", example.raw_facenet_cosine, example.baseline_threshold, example.baseline_decision)}
+            ${scoreBlock("Pair-head score", example.pair_head_score, pairHeadThreshold, example.pair_head_decision, example.case === "unmasked-unmasked" ? "warning" : "")}
+            ${scoreBlock("Final policy score", example.final_policy_score, example.selected_threshold, example.predicted_decision, "final")}
+            <div class="score">
+              <span class="score-label">Operating point</span>
+              <strong class="score-value">FAR ${fmt(example.target_far, 2)}</strong>
+              <small>${example.case === "unmasked-unmasked" ? "baseline bypass" : "adapted pair head"}</small>
+              <div class="meter" aria-hidden="true"><span style="width:${pct(example.target_far)}%"></span></div>
+            </div>
+          </section>
+
+          <section class="section views">
+            <h3>Model Views</h3>
+            <div class="view-grid">${renderViews(example)}</div>
+          </section>
+        `;
+      }
+
+      function render() {
+        renderPairList();
+        renderApp();
+      }
+
+      render();
+    </script>
+  </body>
+</html>

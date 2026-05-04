@@ -30,6 +30,29 @@ The project question is:
 > Can a small adaptation layer improve masked verification for an existing
 > unmasked recognizer, while preserving its behavior on unmasked pairs?
 
+## Biometrics Basics Used In This Project
+
+This project is verification, not identification. Verification asks whether two
+presented images belong to the same identity. Identification would search one
+probe against a gallery of many identities; that is outside the project scope.
+
+Every evaluated pair is either genuine or impostor. A genuine pair has the same
+identity on both sides; an impostor pair has different identities. The pair
+case records which conditions are being compared: `masked-masked`,
+`masked-unmasked`, or `unmasked-unmasked`.
+
+The recognizer produces a similarity score, and a threshold turns that score
+into a match or non-match decision. ROC-AUC measures ranking quality across all
+thresholds. FAR is the false accept rate on impostor pairs, FRR is the false
+reject rate on genuine pairs, and TAR is the genuine accept rate. FAR is
+security-sensitive because false accepts admit an impostor. TAR matters because
+low TAR rejects too many legitimate users.
+
+The final policy uses this vocabulary directly: masked pairs use the adapted
+pair-head score, while unmasked-unmasked pairs bypass the head and keep the
+legacy FaceNet cosine score. That bypass matters because deployments with an
+existing unmasked recognizer should not lose the behavior that already works.
+
 ## Final Method
 
 The recognizer is kept frozen. For each image, the pipeline extracts five
@@ -181,19 +204,23 @@ main project claim.
 
 ## Negative Probes
 
-Several alternatives were explored and rejected:
+The work was not a single lucky run. The final method came out of this decision
+trail:
 
-- fixed score fusion,
-- logistic-regression score fusion,
-- lower-face blackout and blur gates,
-- frozen residual/ridge/mean-shift embedding adapters,
-- test-time occlusion ensembles,
-- contrastive residual embedding adapter,
-- partial fine-tuning of the FaceNet tail,
-- scratch-trained periocular specialist using MediaPipe face landmarks,
-- larger LFW synthetic-mask training with real RMFRD evaluation,
-- residual adapter pretraining on all available masked RMFD images,
-- InsightFace/ArcFace full-embedding pair head.
+| Probe | Outcome | Use in final story |
+|---|---|---|
+| Upper-face preprocessing | Hurt or failed to improve masked-unmasked ranking | Naive occlusion removal is insufficient |
+| Fixed/gated occlusion views | Weak or inconsistent gains | Simple score policies are not enough |
+| Frozen residual/ridge/mean-shift adapters | Small or unstable gains | Embedding-level correction was limited |
+| Test-time occlusion ensembles | Did not become a robust policy | More views alone do not solve calibration |
+| Contrastive residual adapter | Added complexity without a strong result | Kept the final method smaller |
+| Partial FaceNet tail fine-tuning | More risk and not the frozen-deployment story | Future work, not the final claim |
+| Periocular specialist | Failed badly | Crop-only training was not robust |
+| Synthetic mask transfer | Almost no real-domain gain | Domain mismatch matters |
+| RMFD residual adapter pretraining | Hurt the pair-head result | More target images were not automatically useful |
+| InsightFace pair head | Negative control | Detector/crop integration details matter |
+| Dedicated mask-aware recognizer | Stronger ceiling | Honest upper-bound comparison |
+| Pair-head dense interactions | Best lightweight method | Main contribution |
 
 The periocular specialist is especially useful as a negative result. It trained
 successfully, but on seed 42 held-out identities it reached only `0.6358`
@@ -270,6 +297,13 @@ Colab notebook:
 Presentation:
 
 - `slides/pair_head_final_presentation.html`
+
+Demo and final summaries:
+
+- `demo/index.html`
+- `demo/assets/summary.json`
+- `docs/calibration-summary.md`
+- `docs/negative-results-summary.md`
 
 ## References
 

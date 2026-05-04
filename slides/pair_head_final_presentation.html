@@ -235,6 +235,19 @@
         </section>
 
         <section>
+          <h2>Biometric Setup</h2>
+          <ul>
+            <li>This is verification: decide whether two images are the same identity.</li>
+            <li>Pairs are genuine or impostor, across masked-masked, masked-unmasked, and unmasked-unmasked cases.</li>
+            <li>A similarity score plus a threshold becomes match or non-match.</li>
+            <li>FAR controls false accepts; TAR measures genuine accepts at that threshold.</li>
+          </ul>
+          <div class="callout">
+            <p>The final policy uses the pair head only when masks are involved, preserving the unmasked legacy path.</p>
+          </div>
+        </section>
+
+        <section>
           <h2>Final Idea</h2>
           <p>Freeze FaceNet. Extract several occlusion-aware views. Train a small verifier head over pair-level evidence.</p>
           <div class="pipeline">
@@ -359,6 +372,21 @@
           <div class="callout">
             <p>Main is frozen here. Bigger unfreezing, expanded synthetic benchmarks, and dataset upgrades move to follow-up branches.</p>
           </div>
+        </section>
+
+        <section>
+          <h2>Offline Demo</h2>
+          <div class="two-col">
+            <div>
+              <p>The classroom demo is a static verifier with curated pairs, copied images, generated views, scores, and thresholds.</p>
+              <p>It does not require Colab, a GPU, or internet access during the presentation.</p>
+            </div>
+            <div class="panel">
+              <div class="metric">5</div>
+              <div class="metric-label">curated cases: recovered match, masked match, unmasked bypass, impostor rejection, hard failure</div>
+            </div>
+          </div>
+          <p class="foot">App: demo/index.html. Rebuild bundle: scripts/export_demo_bundle.py.</p>
         </section>
 
         <section>

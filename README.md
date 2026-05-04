@@ -33,8 +33,27 @@ already have an unmasked recognizer.
 The main limitation is calibration: at a threshold selected on calibration pairs
 for nominal FAR `0.05`, the full pair head did not improve TAR over raw FaceNet.
 See [docs/final-report.md](docs/final-report.md) for the full result and
+[docs/calibration-summary.md](docs/calibration-summary.md) for the operating
+point summary. See
 [docs/calibration-and-simplification-roadmap.md](docs/calibration-and-simplification-roadmap.md)
 for the next technical path.
+
+## Final Course Deliverables
+
+| Deliverable | Path |
+|---|---|
+| Final report | [docs/final-report.md](docs/final-report.md) |
+| Slides | [slides/pair_head_final_presentation.html](slides/pair_head_final_presentation.html) |
+| Offline demo app | [demo/index.html](demo/index.html) |
+| Demo bundle notes | [demo/README.md](demo/README.md) |
+| Calibration summary | [docs/calibration-summary.md](docs/calibration-summary.md) |
+| Negative-results summary | [docs/negative-results-summary.md](docs/negative-results-summary.md) |
+| Reproduction notes | [docs/reproducibility.md](docs/reproducibility.md) |
+
+The checked-in demo uses anonymized schematic image assets so it can run from
+disk without private dataset images. For the final classroom bundle, rebuild
+`demo/assets/` from a downloaded Colab score CSV and the RMFD/RMFRD image root
+with `scripts/export_demo_bundle.py`.
 
 ## Method
 
@@ -67,6 +86,7 @@ notebooks/
 
 scripts/
   probe_pair_head_robustness.py         Main robustness, ablation, threshold run
+  export_demo_bundle.py                 Static demo bundle exporter
   probe_pair_verifier_head.py           Single-seed pair-head probe
   probe_maskaware_baseline.py           Dedicated mask-aware ceiling comparison
   probe_insightface_pair_head.py        InsightFace negative control
@@ -77,11 +97,45 @@ scripts/
 artifacts/
   Compact checked-in summaries from completed runs
 
+demo/
+  index.html                            Offline curated verifier app
+  assets/                               Demo examples, scores, thresholds, views
+
 docs/
   final-report.md                       Frozen project report
   reproducibility.md                    Runtime and artifact guidance
+  calibration-summary.md                Fixed-FAR operating point summary
+  negative-results-summary.md           Exploration trail and rejected probes
   calibration-and-simplification-roadmap.md
                                        Next technical steps
+```
+
+## Offline Demo
+
+The presentation-safe demo is static:
+
+```bash
+open demo/index.html
+```
+
+It includes five curated examples:
+
+- masked-unmasked genuine pair where the baseline is weak and the pair head
+  helps,
+- masked-masked genuine pair,
+- unmasked-unmasked genuine pair that uses the baseline bypass,
+- impostor pair rejected by both methods,
+- hard false-reject case for calibration/threshold discussion.
+
+To rebuild the bundle from a Colab run with real dataset-selected examples:
+
+```bash
+python scripts/export_demo_bundle.py \
+  --scores /path/to/pair_head_robustness_pair_scores.csv \
+  --image-root /content/datasets/rmfrd/extracted/self-built-masked-face-recognition-dataset \
+  --out-dir demo \
+  --seed 42 \
+  --target-far 0.05
 ```
 
 ## Colab Execution Model

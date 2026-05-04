@@ -1,0 +1,270 @@
+window.DEMO_DATA = {
+  "examples": [
+    {
+      "example_id": "example_001",
+      "title": "Masked-unmasked match recovered",
+      "outcome_role": "masked_unmasked_recovered",
+      "case": "masked-unmasked",
+      "ground_truth_label": 1,
+      "ground_truth": "genuine",
+      "left_id": "identity_A",
+      "right_id": "identity_A",
+      "left_condition": "masked",
+      "right_condition": "unmasked",
+      "identity_left": "A",
+      "identity_right": "A",
+      "notes": "Baseline cosine is below the selected threshold; the pair head crosses it for the final match decision.",
+      "raw_facenet_cosine": 0.421,
+      "pair_head_score": 0.9996,
+      "final_policy_score": 0.9996,
+      "baseline_threshold": 0.476,
+      "pair_head_threshold": 0.999,
+      "selected_threshold": 0.999,
+      "target_far": 0.05,
+      "baseline_decision": "non-match",
+      "pair_head_decision": "match",
+      "predicted_decision": "match",
+      "final_model": "pair_head_full_all_features_masked_only",
+      "left_image": "examples/example_001/left.jpg",
+      "right_image": "examples/example_001/right.jpg",
+      "left_source": "anonymized-demo-asset",
+      "right_source": "anonymized-demo-asset",
+      "views_left": {
+        "full": "examples/example_001/views_left/full.jpg",
+        "lower_blackout": "examples/example_001/views_left/lower_blackout.jpg",
+        "lower_blur": "examples/example_001/views_left/lower_blur.jpg",
+        "upper_only": "examples/example_001/views_left/upper_only.jpg",
+        "eye_band": "examples/example_001/views_left/eye_band.jpg"
+      },
+      "views_right": {
+        "full": "examples/example_001/views_right/full.jpg",
+        "lower_blackout": "examples/example_001/views_right/lower_blackout.jpg",
+        "lower_blur": "examples/example_001/views_right/lower_blur.jpg",
+        "upper_only": "examples/example_001/views_right/upper_only.jpg",
+        "eye_band": "examples/example_001/views_right/eye_band.jpg"
+      }
+    },
+    {
+      "example_id": "example_002",
+      "title": "Masked-masked genuine match",
+      "outcome_role": "masked_masked_match",
+      "case": "masked-masked",
+      "ground_truth_label": 1,
+      "ground_truth": "genuine",
+      "left_id": "identity_B",
+      "right_id": "identity_B",
+      "left_condition": "masked",
+      "right_condition": "masked",
+      "identity_left": "B",
+      "identity_right": "B",
+      "notes": "Both images include masks, so the adapted pair-head score is the deployed policy score.",
+      "raw_facenet_cosine": 0.612,
+      "pair_head_score": 0.9994,
+      "final_policy_score": 0.9994,
+      "baseline_threshold": 0.505,
+      "pair_head_threshold": 0.998,
+      "selected_threshold": 0.998,
+      "target_far": 0.05,
+      "baseline_decision": "match",
+      "pair_head_decision": "match",
+      "predicted_decision": "match",
+      "final_model": "pair_head_full_all_features_masked_only",
+      "left_image": "examples/example_002/left.jpg",
+      "right_image": "examples/example_002/right.jpg",
+      "left_source": "anonymized-demo-asset",
+      "right_source": "anonymized-demo-asset",
+      "views_left": {
+        "full": "examples/example_002/views_left/full.jpg",
+        "lower_blackout": "examples/example_002/views_left/lower_blackout.jpg",
+        "lower_blur": "examples/example_002/views_left/lower_blur.jpg",
+        "upper_only": "examples/example_002/views_left/upper_only.jpg",
+        "eye_band": "examples/example_002/views_left/eye_band.jpg"
+      },
+      "views_right": {
+        "full": "examples/example_002/views_right/full.jpg",
+        "lower_blackout": "examples/example_002/views_right/lower_blackout.jpg",
+        "lower_blur": "examples/example_002/views_right/lower_blur.jpg",
+        "upper_only": "examples/example_002/views_right/upper_only.jpg",
+        "eye_band": "examples/example_002/views_right/eye_band.jpg"
+      }
+    },
+    {
+      "example_id": "example_003",
+      "title": "Unmasked-unmasked bypass",
+      "outcome_role": "unmasked_bypass",
+      "case": "unmasked-unmasked",
+      "ground_truth_label": 1,
+      "ground_truth": "genuine",
+      "left_id": "identity_C",
+      "right_id": "identity_C",
+      "left_condition": "unmasked",
+      "right_condition": "unmasked",
+      "identity_left": "C",
+      "identity_right": "C",
+      "notes": "No mask is involved, so the policy preserves the legacy FaceNet cosine path.",
+      "raw_facenet_cosine": 0.742,
+      "pair_head_score": 0.681,
+      "final_policy_score": 0.742,
+      "baseline_threshold": 0.482,
+      "pair_head_threshold": 0.482,
+      "selected_threshold": 0.482,
+      "target_far": 0.05,
+      "baseline_decision": "match",
+      "pair_head_decision": "match",
+      "predicted_decision": "match",
+      "final_model": "baseline_full",
+      "left_image": "examples/example_003/left.jpg",
+      "right_image": "examples/example_003/right.jpg",
+      "left_source": "anonymized-demo-asset",
+      "right_source": "anonymized-demo-asset",
+      "views_left": {
+        "full": "examples/example_003/views_left/full.jpg",
+        "lower_blackout": "examples/example_003/views_left/lower_blackout.jpg",
+        "lower_blur": "examples/example_003/views_left/lower_blur.jpg",
+        "upper_only": "examples/example_003/views_left/upper_only.jpg",
+        "eye_band": "examples/example_003/views_left/eye_band.jpg"
+      },
+      "views_right": {
+        "full": "examples/example_003/views_right/full.jpg",
+        "lower_blackout": "examples/example_003/views_right/lower_blackout.jpg",
+        "lower_blur": "examples/example_003/views_right/lower_blur.jpg",
+        "upper_only": "examples/example_003/views_right/upper_only.jpg",
+        "eye_band": "examples/example_003/views_right/eye_band.jpg"
+      }
+    },
+    {
+      "example_id": "example_004",
+      "title": "Impostor pair rejected",
+      "outcome_role": "impostor_rejected",
+      "case": "masked-unmasked",
+      "ground_truth_label": 0,
+      "ground_truth": "impostor",
+      "left_id": "identity_A",
+      "right_id": "identity_D",
+      "left_condition": "masked",
+      "right_condition": "unmasked",
+      "identity_left": "A",
+      "identity_right": "D",
+      "notes": "The baseline and adapted scores both remain below their selected thresholds.",
+      "raw_facenet_cosine": 0.318,
+      "pair_head_score": 0.071,
+      "final_policy_score": 0.071,
+      "baseline_threshold": 0.476,
+      "pair_head_threshold": 0.999,
+      "selected_threshold": 0.999,
+      "target_far": 0.05,
+      "baseline_decision": "non-match",
+      "pair_head_decision": "non-match",
+      "predicted_decision": "non-match",
+      "final_model": "pair_head_full_all_features_masked_only",
+      "left_image": "examples/example_004/left.jpg",
+      "right_image": "examples/example_004/right.jpg",
+      "left_source": "anonymized-demo-asset",
+      "right_source": "anonymized-demo-asset",
+      "views_left": {
+        "full": "examples/example_004/views_left/full.jpg",
+        "lower_blackout": "examples/example_004/views_left/lower_blackout.jpg",
+        "lower_blur": "examples/example_004/views_left/lower_blur.jpg",
+        "upper_only": "examples/example_004/views_left/upper_only.jpg",
+        "eye_band": "examples/example_004/views_left/eye_band.jpg"
+      },
+      "views_right": {
+        "full": "examples/example_004/views_right/full.jpg",
+        "lower_blackout": "examples/example_004/views_right/lower_blackout.jpg",
+        "lower_blur": "examples/example_004/views_right/lower_blur.jpg",
+        "upper_only": "examples/example_004/views_right/upper_only.jpg",
+        "eye_band": "examples/example_004/views_right/eye_band.jpg"
+      }
+    },
+    {
+      "example_id": "example_005",
+      "title": "Hard false-reject case",
+      "outcome_role": "hard_failure",
+      "case": "masked-unmasked",
+      "ground_truth_label": 1,
+      "ground_truth": "genuine",
+      "left_id": "identity_D",
+      "right_id": "identity_D",
+      "left_condition": "masked",
+      "right_condition": "unmasked",
+      "identity_left": "D",
+      "identity_right": "D",
+      "notes": "A conservative FAR threshold can still reject a genuine masked-unmasked pair.",
+      "raw_facenet_cosine": 0.389,
+      "pair_head_score": 0.997,
+      "final_policy_score": 0.997,
+      "baseline_threshold": 0.476,
+      "pair_head_threshold": 0.999,
+      "selected_threshold": 0.999,
+      "target_far": 0.05,
+      "baseline_decision": "non-match",
+      "pair_head_decision": "non-match",
+      "predicted_decision": "non-match",
+      "final_model": "pair_head_full_all_features_masked_only",
+      "left_image": "examples/example_005/left.jpg",
+      "right_image": "examples/example_005/right.jpg",
+      "left_source": "anonymized-demo-asset",
+      "right_source": "anonymized-demo-asset",
+      "views_left": {
+        "full": "examples/example_005/views_left/full.jpg",
+        "lower_blackout": "examples/example_005/views_left/lower_blackout.jpg",
+        "lower_blur": "examples/example_005/views_left/lower_blur.jpg",
+        "upper_only": "examples/example_005/views_left/upper_only.jpg",
+        "eye_band": "examples/example_005/views_left/eye_band.jpg"
+      },
+      "views_right": {
+        "full": "examples/example_005/views_right/full.jpg",
+        "lower_blackout": "examples/example_005/views_right/lower_blackout.jpg",
+        "lower_blur": "examples/example_005/views_right/lower_blur.jpg",
+        "upper_only": "examples/example_005/views_right/upper_only.jpg",
+        "eye_band": "examples/example_005/views_right/eye_band.jpg"
+      }
+    }
+  ],
+  "thresholds": {
+    "baseline_full": {
+      "masked-masked": 0.505,
+      "masked-unmasked": 0.476,
+      "unmasked-unmasked": 0.482
+    },
+    "pair_head_full_all_features_masked_only": {
+      "masked-masked": 0.998,
+      "masked-unmasked": 0.999,
+      "unmasked-unmasked": 0.482
+    }
+  },
+  "summary": {
+    "bundle_type": "checked-in anonymized offline demo bundle",
+    "source_scores": "representative values from final artifacts; rebuild with scripts/export_demo_bundle.py for dataset-selected pairs",
+    "seed": 42,
+    "target_far": 0.05,
+    "examples": 5,
+    "baseline_model": "baseline_full",
+    "pair_model": "pair_head_full_all_features_masked_only",
+    "ranking_result": {
+      "baseline_masked_unmasked_roc_auc_mean": 0.7972,
+      "pair_head_masked_unmasked_roc_auc_mean": 0.8228,
+      "mean_gain": 0.0256,
+      "unmasked_unmasked_preserved_roc_auc_mean": 0.9694
+    },
+    "calibration_far05": {
+      "baseline_full": {
+        "far_mean": 0.0481,
+        "tar_mean": 0.3866,
+        "accuracy_mean": 0.6638
+      },
+      "pair_head_full_all_features_masked_only": {
+        "far_mean": 0.0502,
+        "tar_mean": 0.3769,
+        "accuracy_mean": 0.6577
+      }
+    },
+    "selection_roles": [
+      "masked_unmasked_recovered",
+      "masked_masked_match",
+      "unmasked_bypass",
+      "impostor_rejected",
+      "hard_failure"
+    ]
+  }
+};

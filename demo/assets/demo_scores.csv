@@ -1,0 +1,6 @@
+example_id,raw_facenet_cosine,pair_head_score,final_policy_score,baseline_threshold,pair_head_threshold,selected_threshold,target_far,baseline_decision,pair_head_decision,predicted_decision,final_model
+example_001,0.421,0.9996,0.9996,0.476,0.999,0.999,0.05,non-match,match,match,pair_head_full_all_features_masked_only
+example_002,0.612,0.9994,0.9994,0.505,0.998,0.998,0.05,match,match,match,pair_head_full_all_features_masked_only
+example_003,0.742,0.681,0.742,0.482,0.482,0.482,0.05,match,match,match,baseline_full
+example_004,0.318,0.071,0.071,0.476,0.999,0.999,0.05,non-match,non-match,non-match,pair_head_full_all_features_masked_only
+example_005,0.389,0.997,0.997,0.476,0.999,0.999,0.05,non-match,non-match,non-match,pair_head_full_all_features_masked_only

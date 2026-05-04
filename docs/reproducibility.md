@@ -67,6 +67,22 @@ python scripts/analyze_calibration_operating_points.py \
   --out-dir /content/masked_face_final_runs/rmfd_pair_head_robustness_seed42_7_99/calibration
 ```
 
+Offline demo export, when raw scores and the dataset image root are available:
+
+```bash
+python scripts/export_demo_bundle.py \
+  --scores /content/masked_face_final_runs/rmfd_pair_head_robustness_seed42_7_99/pair_head_robustness_pair_scores.csv \
+  --image-root /content/datasets/rmfrd/extracted/self-built-masked-face-recognition-dataset \
+  --out-dir /content/masked_face_final_runs/demo_bundle \
+  --seed 42 \
+  --target-far 0.05
+```
+
+Download or copy the resulting `demo_bundle/` directory and open
+`demo_bundle/index.html` for the presentation-safe curated verifier. The app
+uses precomputed scores and copied images, so it does not need Colab, a GPU, or
+network access during the demo.
+
 ## Run Manifest Checklist
 
 Save these with every full run:
@@ -84,6 +100,7 @@ Save these with every full run:
 - feature standardizer,
 - aggregate ROC-AUC report,
 - operating-point report for FAR `0.01`, `0.05`, and `0.10`.
+- exported offline demo bundle, or enough raw scores and images to rebuild it.
 
 The checked-in `artifacts/` directory should stay compact. Large raw score logs,
 checkpoints, downloaded datasets, and local backups should remain outside git.
